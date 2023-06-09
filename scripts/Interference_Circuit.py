@@ -4,7 +4,6 @@ import torch
 from qgraph import FeynmanDiagramDataset
 from qgraph import interference, matrix_squared
 from torch_geometric.loader import DataLoader
-from FDQLearn_main import main
 
 
 def function(theta):
