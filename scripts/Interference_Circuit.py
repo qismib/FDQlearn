@@ -26,13 +26,10 @@ file2 = '../data/dataset/QED_data_e_annih_e_t.csv'
 feature_map = 'parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
 # kind of feature map to use in training
 
-torch.manual_seed(12345)
-np.random.seed(12345)
-s_params = main(num_layers, num_epoch, file1, feature_map, batch, elements)
-
-torch.manual_seed(12345)
-np.random.seed(12345)
-t_params = main(num_layers, num_epoch, file2, feature_map, batch, elements)
+s_array = np.loadtxt('../data/interference/parametrized_channel_s_final_params.txt')
+s_params = torch.tensor(s_array)
+t_array = np.loadtxt('../data/interference/parametrized_channel_t_final_params.txt')
+t_params = torch.tensor(t_array)
 
 torch.manual_seed(12345)
 np.random.seed(12345)
