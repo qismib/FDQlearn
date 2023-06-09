@@ -11,6 +11,7 @@ def function(theta):
     q_e = np.sqrt(4*np.pi/137)
     return q_e**4*(1+np.cos(theta))**2/(2*(1-np.cos(theta)))
 
+
 def bhabha(theta):
     q_e = np.sqrt(4 * np.pi / 137)
     return q_e**4*(8/(1-np.cos(theta))**2 -(1-np.cos(theta))/4 + (1+np.cos(theta))**4/(2-2*np.cos(theta))**2)
