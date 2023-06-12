@@ -53,8 +53,30 @@ def parametric_ZZ_layer(the_G, the_params):
     :return: None
     """
     for the_edge in the_G.edges:
-        the_feat = torch.tensor([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'], the_G.edges[the_edge]['charge']])
+        the_feat = torch.tensor([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'],
+                                 the_G.edges[the_edge]['charge']], dtype=torch.float)
         qml.IsingZZ(torch.inner(the_feat, the_params), wires=the_edge)
+
+
+def fully_parametric_ZZ_layer(the_G, the_params):
+    """
+    :param: the_G: graph representing the Feynamn diagram
+    :param: the_params: trainable parameters that weights the edge features
+    :return: None
+    """
+    photon_params = the_params[:3]
+    electron_params = the_params[3:6]
+    muon_params = the_params[6:]
+
+    for the_edge in the_G.edges:
+        the_feat = torch.tensor([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'],
+                                 the_G.edges[the_edge]['charge']], dtype=torch.float)
+        if the_feat[0] == 0:
+            qml.IsingZZ(torch.inner(the_feat, photon_params), wires=the_edge)
+        elif 0.5 < the_feat[0] < 0.6:
+            qml.IsingZZ(torch.inner(the_feat, electron_params), wires=the_edge)
+        elif 105 < the_feat[0] < 106:
+            qml.IsingZZ(torch.inner(the_feat, muon_params), wires=the_edge)
 
 
 """
@@ -68,7 +90,7 @@ def Kinetic_layer(the_G):
     :return: None
     """
     for the_node in the_G.nodes:
-        qml.U2(the_G.nodes[the_node]['p_norm'], the_G.nodes[the_node]['theta'], wires=the_node)
+        qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)
 
 
 ########################################################################################################################
@@ -145,6 +167,35 @@ def parametric_qgnn_feature_map(the_G, the_params):
     qml.Barrier()
 
 
+def fully_parametric_qgnn_feature_map(the_G, the_params):
+    """
+    :param: the_G: graph representing the Feynamn diagram
+    :param: the_params: number of trainable parameters that weights the edge features
+    :return: None
+    """
+    assert len(the_params) == 3*len(['mass', 'spin', 'charge']), 'parameters must be equal to the number of edge ' \
+                                                                 'times the number of particles (3) features'
+
+    for j in the_G.nodes:
+        qml.Hadamard(wires=j)
+
+    qml.Barrier()
+
+    # encode edge's features
+    fully_parametric_ZZ_layer(the_G, the_params=the_params)
+
+    qml.Barrier()
+
+    # encode node's features
+    RX_layer(the_G)
+
+    qml.Barrier()
+
+    # encode angle and momentum features
+    Kinetic_layer(the_G)
+
+    qml.Barrier()
+
 ########################################################################################################################
 
 
@@ -160,7 +211,6 @@ def qgnn_ansatz(the_G, the_n_layers, the_params):
     :param: the_G: graph representing a feynman diagram
     :param: the_n_layers: number of layers (depth of the circuit)
     :param: the_params: value of the parameters
-    :return: None
     """
     the_m_init = 0
     the_m_fin = 0
@@ -282,6 +332,33 @@ def parametric_qgnn(the_G, the_n_layers, the_params):
     qgnn_ansatz(the_G, the_n_layers, ansatz_params)
 
 
+"""
+FUNCTION THAT DEFINE THE GLOBAL QUANTUM CIRCUIT (WITH FULLY PARAMETRIZED FEATURE MAP)
+"""
+
+
+def fully_parametric_qgnn(the_G, the_n_layers, the_params):
+    """
+    :param: the_G: graph representing the Feynamn diagram
+    :param: the_n_layers: number of layers
+    :param: the_params: value of the parameters
+    :return: None
+    """
+
+    # get the number of vertices
+    the_n_wires = len(the_G.nodes)
+
+    # defining parameters for feature map(first three) and ansatz (the rest)
+    feat_params = the_params[:9]
+    ansatz_params = the_params[9:]
+
+    # the parametric feature map
+    fully_parametric_qgnn_feature_map(the_G, feat_params)
+
+    # the ansatz
+    qgnn_ansatz(the_G, the_n_layers, ansatz_params)
+
+
 ########################################################################################################################
 
 def bhabha_operator(the_wire=0, a=2, b=1):
@@ -313,8 +390,10 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
         parametric_qgnn(the_G, the_n_layers, the_params)
     elif the_choice == 'unparametrized':
         qgnn(the_G, the_n_layers, the_params)
+    elif the_choice == 'fully_parametrized':
+        fully_parametric_qgnn(the_G, the_n_layers, the_params)
     else:
-        print("Error, the_choice must be either 'parametrized' or 'unparametrized'")
+        print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
     # my_operator = bhabha_operator() #this operator is the one we want to define for the interference circuit
