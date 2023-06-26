@@ -56,7 +56,7 @@ Install 'requirements.txt' and my library:
 for Linux and MacOs:
 1) $ source .venv/bin/activate
 
-for Windows PowerShell:
+for Windows:
 1) $ .venv/Scripts/activate
 
 run whatever cmd, es: $ python scripts/FDQLearn_main.py
