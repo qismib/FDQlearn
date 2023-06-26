@@ -33,18 +33,21 @@ Here are showed the steps to setup the virtual environment with
 the right versions of the packages I've used; the version of Python is 3.9.13.
 
 Create the environment:
-1) $ conda env create -p ./.venv --file env.yml 
+1) $ python -m venv ./.venv  
 
 Activate the environment:
 
 for Linux and MacOs:
 1) $ source .venv/bin/activate
 
-for Windows:
-2) $ .venv/Scripts/activate
+for Windows (cmd.exe):
+2) $ .venv/Scripts/activate.bat
+
+for Windows PowerShell:
+2) $ .venv/Scripts/Activate.ps1
 
 Install 'requirements.txt' and my library:
-3) $ pip install -f requirements.txt
+3) $ pip install -r requirements.txt
 4)  $ pip install -e .
 
 
@@ -56,10 +59,17 @@ Install 'requirements.txt' and my library:
 for Linux and MacOs:
 1) $ source .venv/bin/activate
 
-for Windows:
-1) $ .venv/Scripts/activate
+for Windows (cmd.exe):
+2) $ .venv/Scripts/activate.bat
 
-run whatever cmd, es: $ python scripts/FDQLearn_main.py
+for Windows PowerShell:
+2) $ .venv/Scripts/Activate.ps1
+
+
+3) run whatever cmd, es: $ python scripts/FDQLearn_main.py
+
+
+4) to deactivate just run: deactivate
 
 ## Dataset generation (venv command)
 In the repo there are some existent datasets, but there's the original notebook
@@ -91,8 +101,9 @@ Install 'requirements.txt' and my library:
 
 1) $ conda activate ./.venv
 
-run whatever cmd, es: $ python scripts/FDQLearn_main.py
+2) run whatever cmd, es: $ python scripts/FDQLearn_main.py
 
+3) to stop the virtual environment: conda deactivate
 
 ## Dataset generation (conda)
 
