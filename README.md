@@ -40,7 +40,7 @@ Activate the environment:
 for Linux and MacOs:
 1) $ source .venv/bin/activate
 
-for Windows PowerShell:
+for Windows:
 2) $ .venv/Scripts/activate
 
 Install 'requirements.txt' and my library:
@@ -60,6 +60,14 @@ for Windows:
 1) $ .venv/Scripts/activate
 
 run whatever cmd, es: $ python scripts/FDQLearn_main.py
+
+## Dataset generation (venv command)
+In the repo there are some existent datasets, but there's the original notebook
+from the previous paper that create a dataset; the command to execute the jupyter notebook
+(after activating the virtual environment) is:
+
+$ ipython kernel install --user --name=.venv
+
 
 ## Installation of the virtual environment (conda)
 
@@ -86,7 +94,7 @@ Install 'requirements.txt' and my library:
 run whatever cmd, es: $ python scripts/FDQLearn_main.py
 
 
-## Dataset generation
+## Dataset generation (conda)
 
 In the repo there are some existent datasets, but there's the original notebook
 from the previous paper that create a dataset; the command to execute the jupyter notebook
