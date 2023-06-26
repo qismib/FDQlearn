@@ -40,11 +40,11 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     n = len(q_dataset.dataset[0][0].nodes)  # total number of nodes
 
     if choice == 'unparametrized':
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 2), dtype=torch.float)
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1), dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 2) + l, dtype=torch.float)
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
     final_params = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,
