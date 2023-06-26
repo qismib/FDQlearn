@@ -26,12 +26,12 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     q_dataset = FeynmanDiagramDataset(the_file_path=the_file, the_n_elements=the_elem)
 
     # Splitting q_dataset into training, test and validation set
-    training_set, test_set = train_test_split(q_dataset, train_size=0.8)
+    # training_set, test_set = train_test_split(q_dataset, train_size=0.8)
     training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
     # standardization of the feature 'p_norm' and of the output 'y'
     y_stat, p_stat = standardization(training_set, validation_set, 0.5)
-    y_stat, p_stat = standardization(training_set, test_set, 0.5)
+    # y_stat, p_stat = standardization(training_set, test_set, 0.5)
 
     validation_s_set = []
     validation_t_set = []
@@ -43,7 +43,8 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
     # Building DataLoaders for each set
     training_loader = DataLoader(training_set, batch_size=batch_size)
-    test_loader = DataLoader(test_set)
+    # test_loader = DataLoader(test_set)
+    validation_loader = DataLoader(validation_set)
     validation_s_loader = DataLoader(validation_s_set)
     validation_t_loader = DataLoader(validation_t_set)
 
@@ -80,8 +81,7 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
                               the_val_file, n_layers, choice)
     array_params = [i.detach().numpy() for i in final_params]
     np.savetxt(the_param_file, array_params)
-    total_test_prediction(test_loader, final_params, y_stat, n_layers, choice)
-
+    total_test_prediction(validation_loader, final_params, y_stat, n_layers, choice)
 
 # fixing the seeds:
 torch.manual_seed(12345)

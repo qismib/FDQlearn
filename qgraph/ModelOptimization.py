@@ -162,8 +162,8 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_n_layer
     to true output of them with a plot
     :param: the_test_loader: DataLoader object of the test set
     :param: the_params: parameters to insert in the quantum circuit
-    :param: the_n_layers: numbers of layers of the quantum circuit
     :param: the_test_file: file where I save the predictions of the test set
+    :param: the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :return: None
     """
