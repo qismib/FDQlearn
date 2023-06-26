@@ -90,7 +90,8 @@ def Kinetic_layer(the_G):
     :return: None
     """
     for the_node in the_G.nodes:
-        qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)
+        # qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)  # for a circuit with momentum
+        qml.U1(the_G.graph['theta'], wires=the_node) # for a circuit without momentum
 
 
 ########################################################################################################################
@@ -235,16 +236,19 @@ def qgnn_ansatz(the_G, the_n_layers, the_params):
     # I connect each initial node to any possible propagator,
     # the same for the final nodes
 
-    assert len(the_params) == the_n_layers * (the_m + the_n + 2), "Number of parameters is wrong"
+    # number of parameters with the momentum p
+    # assert len(the_params) == the_n_layers * (the_m + the_n + 2), "Number of parameters is wrong"
+
+    # number of parameters without the momentum p
+    assert len(the_params) == the_n_layers * (the_m + the_n + 1), "Number of parameters is wrong"
 
     for i in range(the_n_layers):
-
         # here I divide the_layer_params list into a list for parameters that will act on edges,
         # parameters that will act on nodes and the ones for momentum and angle features
-        the_layer_params = the_params[i * (the_m + the_n + 2):(i + 1) * (the_m + the_n + 2)]
+        the_layer_params = the_params[i * (the_m + the_n + 1):(i + 1) * (the_m + the_n + 1)]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         the_edge_params = the_layer_params[:the_m]
-        the_nodes_params = the_layer_params[the_m:-2]
-        the_kinetic_params = the_layer_params[-2:]
+        the_nodes_params = the_layer_params[the_m:-1]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_kinetic_params = the_layer_params[-1:]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
 
         # ind is the index of the_edge_params, trainable parameters.
         ind = 0
@@ -276,7 +280,8 @@ def qgnn_ansatz(the_G, the_n_layers, the_params):
         # U2-gate (rotation and phase-shift on a single qubit)
         for j in the_G.nodes:
             qml.RX(the_nodes_params[j], wires=j)
-            qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)
+            # qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)  # for a circuit with momentum
+            qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
 
 
 ########################################################################################################################
