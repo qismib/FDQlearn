@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 
 
-def standardization(the_train_set, the_val_set, the_test_set, the_bandwidth=1.):
+def standardization(the_train_set, the_val_set, the_bandwidth=1.):
     """
     Function for standard scaling of one feature of the dataset list
     :param: the_train_set: list of single datas for the training set
@@ -30,11 +30,6 @@ def standardization(the_train_set, the_val_set, the_test_set, the_bandwidth=1.):
         the_val_set[i][1] = ((val_y[i] - the_y_mean)/the_y_std)*the_bandwidth
         the_val_set[i][0]['p_norm'] = ((val_p_values[i] - the_p_mean) / the_p_std) * the_bandwidth
 
-    test_y = [i[1] for i in the_test_set]
-    test_p_values = [i[0]['p_norm'] for i in the_test_set]
-    for i in range(len(the_val_set)):
-        the_test_set[i][1] = ((test_y[i] - the_y_mean) / the_y_std) * the_bandwidth
-        the_test_set[i][0]['p_norm'] = ((test_p_values[i] - the_p_mean) / the_p_std) * the_bandwidth
 
     the_y = [the_y_mean, the_y_std]
     the_p = [the_p_mean, the_p_std]

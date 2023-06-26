@@ -30,7 +30,8 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
     # standardization of the feature 'p_norm' and of the output 'y'
-    y_stat, p_stat = standardization(training_set, validation_set, test_set, 0.5)
+    y_stat, p_stat = standardization(training_set, validation_set, 0.5)
+    y_stat, p_stat = standardization(training_set, test_set, 0.5)
 
     validation_s_set = []
     validation_t_set = []
