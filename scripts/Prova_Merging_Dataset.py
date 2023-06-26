@@ -98,7 +98,7 @@ val_file = '../data/training_test_results/parametrized_total_val_loss.txt'
 test_pred_file = '../data/interference/parametrized_total_final_outcome.txt'
 test_param_file = '../data/interference/parametrized_total_final_params.txt'
 
-feature_map = 'parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
+feature_map = ' parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
 # kind of feature map to use in training
 
 main(num_layers, num_epoch, file, train_file, val_file, test_param_file, feature_map, batch, elements)
