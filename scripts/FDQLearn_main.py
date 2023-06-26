@@ -63,13 +63,13 @@ np.random.seed(12345)
 
 
 num_layers = 3
-num_epoch = 5
+num_epoch = 30
 batch = 20
 elements = 500
 file = '../data/dataset/QED_data_e_annih_e_s.csv'
-train_file = '../data/training_test_results/parametrized_s_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_s_channel_val_loss.txt'
-test_pred_file = '../data/interference/parametrized_channel_s_final_params.txt'
+train_file = 'loss_prova.txt'  # '../data/training_test_results/parametrized_s_channel_train_loss.txt'
+val_file = 'val_prova.txt'  # '../data/training_test_results/parametrized_s_channel_val_loss.txt'
+test_pred_file = 'pred_prova.txt'  # '../data/interference/parametrized_channel_s_final_params.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
 # kind of feature map to use in training
