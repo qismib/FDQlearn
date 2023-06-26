@@ -26,7 +26,7 @@ def get_mse(predictions, ground_truth):
     """
     n = len(predictions)
     assert len(ground_truth) == n, "The number of predictions and true labels is not equal"
-    return sum([(predictions[i] - ground_truth[i]) ** 2 for i in range(n)])
+    return sum([(predictions[i] - torch.tensor(ground_truth[i], dtype=torch.float)) ** 2 for i in range(n)])
 
 
 """
