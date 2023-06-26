@@ -8,7 +8,20 @@ import matplotlib.pyplot as plt
 
 
 def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: str,
-         the_test_file: str, the_param_file: str, choice: str, batch_size: int = 20, the_elem: int = 500):
+         the_param_file: str, choice: str, batch_size: int = 20, the_elem: int = 500):
+    """
+   Main function for QML algorithm for a dataset composed by different Feynman diagrams (s and t channel
+   of Bhabha scattering)
+   :param: n_layers: number of layers used for the ansatz
+   :param: the_file: string with the path of the csv file from which I want to build the dataset
+   :param: the_train_file: file for the training loss over the training process
+   :param: the_val_file:  file for the validation loss at each epoch
+   :param: the_param_file: file for the final values of the parameters of the network
+   :param: the_choice: if we use a parametrized feature map or not
+   :param: the_batch_size: batch size of the training dataset
+   :param: the_elem: number of elements to pick randomly from the csv (number of elements of the dataset)
+   :return: None
+   """
 
     q_dataset = FeynmanDiagramDataset(the_file_path=the_file, the_n_elements=the_elem)
 
@@ -65,11 +78,8 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     final_params = train_qgnn(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch, the_train_file,
                               the_val_file, n_layers, choice)
     array_params = [i.detach().numpy() for i in final_params]
-    # np.savetxt('../data/training_test_results/'+choice + '_circuit_final_params.txt', array_params)
     np.savetxt(the_param_file, array_params)
     total_test_prediction(test_loader, final_params, y_stat, n_layers, choice)
-
-    return final_params
 
 
 # fixing the seeds:
@@ -90,4 +100,4 @@ test_param_file = '../data/interference/parametrized_total_final_params.txt'
 feature_map = 'fully_parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
 # kind of feature map to use in training
 
-params = main(num_layers, num_epoch, file, train_file, val_file, test_pred_file, test_param_file, feature_map, batch, elements)
+main(num_layers, num_epoch, file, train_file, val_file, test_param_file, feature_map, batch, elements)
