@@ -99,12 +99,10 @@ def train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_lo
             print("Epoch: {:2d} | Training loss: {:3f} | s-channel loss: {:3f} | t-channel loss: {:3f} | "
                   "Elapsed Time per Epoch: {:3f}".format(*res))
 
-    validation_loss = validation_s_loss + validation_t_loss
+    validation_loss = np.concatenate((validation_s_loss, validation_t_loss))
     # saving the loss value for each epoch
     np.savetxt(the_train_file, epoch_loss)
-    file1 = open(the_val_file, 'w')
-    file1.writelines(validation_loss)
-    file1.close()
+    np.savetxt(the_val_file, validation_loss)
 
     # plotting the loss value for each epoch
     plt.plot(range(the_n_epochs), epoch_loss, label='training')
