@@ -39,11 +39,19 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
     n = len(q_dataset.dataset[0][0].nodes)  # total number of nodes
 
     if choice == 'unparametrized':
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1), dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        obs_params = 2  # number of parameters of the observable
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        obs_params = 2  # number of parameters of the observable
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params.requires_grad = True
+
+    elif choice == 'fully_parametrized':
+        l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
+        obs_params = 2  # number of parameters of the observable
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
     final_params = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,
