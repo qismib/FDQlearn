@@ -1,7 +1,7 @@
 from pennylane import numpy as np
 import torch
 from qgraph import FeynmanDiagramDataset, standardization
-from qgraph import train_qgnn, total_test_prediction
+from qgraph import train_qgnn, total_test_prediction, check_train
 from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -66,6 +66,7 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     n = len(q_dataset.dataset[0][0].nodes)  # total number of nodes
 
     if choice == 'unparametrized':
+        l=0
         init_params = 0.01 * torch.randn(n_layers * (m + n + 1), dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
@@ -77,8 +78,8 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
         init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
-    final_params = train_qgnn(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch, the_train_file,
-                              the_val_file, n_layers, choice)
+    final_params = check_train(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch, l, m,
+                               the_train_file, the_val_file, n_layers, choice)
     array_params = [i.detach().numpy() for i in final_params]
     np.savetxt(the_param_file, array_params)
     total_test_prediction(validation_loader, final_params, y_stat, n_layers, choice)
