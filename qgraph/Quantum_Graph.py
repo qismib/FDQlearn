@@ -366,14 +366,14 @@ def fully_parametric_qgnn(the_G, the_n_layers, the_params):
 
 ########################################################################################################################
 
-def bhabha_operator(the_wire=0, a=2, b=1):
+def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float), b=torch.tensor(1., dtype=torch.float)):
     """
         :param: the_wire: qubit on which the operator acts
         :param: a, b: positive real coefficient
         :return: an operator which is diagonal, hermitian and positive definite
         """
     assert a != b, "a and b must be different"
-    return np.absolute(a)*qml.Projector(basis_state=[0], wires=the_wire) + np.absolute(b)*qml.Projector(basis_state=[1], wires=the_wire)
+    return torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire) + torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire)
 
 ########################################################################################################################
 
