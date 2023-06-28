@@ -25,13 +25,11 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
     q_dataset = FeynmanDiagramDataset(the_file_path=the_file, the_n_elements=the_elem)
 
-    # Splitting q_dataset into training, test and validation set
-    # training_set, test_set = train_test_split(q_dataset, train_size=0.8)
+    # Splitting q_dataset into training and validation set
     training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
     # standardization of the feature 'p_norm' and of the output 'y'
     y_stat, p_stat = standardization(training_set, validation_set, 0.5)
-    # y_stat, p_stat = standardization(training_set, test_set, 0.5)
 
     validation_s_set = []
     validation_t_set = []
@@ -67,15 +65,18 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
     if choice == 'unparametrized':
         l=0
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1), dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        obs_params = 2  # number of parameters of the observable
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        obs_params = 2  # number of parameters of the observable
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'fully_parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        obs_params = 2  # number of parameters of the observable
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
     final_params = check_train(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch, l, m,
@@ -83,6 +84,7 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     array_params = [i.detach().numpy() for i in final_params]
     np.savetxt(the_param_file, array_params)
     total_test_prediction(validation_loader, final_params, y_stat, n_layers, choice)
+
 
 # fixing the seeds:
 torch.manual_seed(12345)

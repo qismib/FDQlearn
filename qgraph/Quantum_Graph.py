@@ -372,8 +372,8 @@ def bhabha_operator(the_wire=0, a=2, b=1):
         :param: a, b: positive real coefficient
         :return: an operator which is diagonal, hermitian and positive definite
         """
-    assert 0 <= a != b >= 0, "a and b must be positive real and different numbers"
-    return a*qml.Projector(basis_state=[0], wires=the_wire) + b*qml.Projector(basis_state=[1], wires=the_wire)
+    assert a != b, "a and b must be different"
+    return np.absolute(a)*qml.Projector(basis_state=[0], wires=the_wire) + np.absolute(b)*qml.Projector(basis_state=[1], wires=the_wire)
 
 ########################################################################################################################
 
@@ -390,20 +390,20 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     :param: the_choice: string that tells which feature map we want to use
     :return: expectation value of a diagonal, positive hermitian operator on the first qubit
     """
+    the_circuit_params = the_params[:-2]
+    the_observable_params = the_params[-2:]
 
     if the_choice == 'parametrized':
-        parametric_qgnn(the_G, the_n_layers, the_params)
+        parametric_qgnn(the_G, the_n_layers, the_circuit_params)
     elif the_choice == 'unparametrized':
-        qgnn(the_G, the_n_layers, the_params)
+        qgnn(the_G, the_n_layers, the_circuit_params)
     elif the_choice == 'fully_parametrized':
-        fully_parametric_qgnn(the_G, the_n_layers, the_params)
+        fully_parametric_qgnn(the_G, the_n_layers, the_circuit_params)
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
-    # my_operator = bhabha_operator() #this operator is the one we want to define for the interference circuit
-    my_operator = qml.PauliZ(0)
-
+    my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
     return qml.expval(my_operator)
 
 
@@ -434,6 +434,11 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     :return: expectation value of a composite operator that is the prediction of the matrix element squared
     """
 
+    the_s_observable = the_s_params[-2:]
+    the_s_params = the_s_params[:-2]
+    the_t_observable = the_t_params[-2:]
+    the_t_params = the_t_params[:-2]
+
     qml.Hadamard(wires=6)
 
     if the_choice == 'parametrized':
@@ -446,13 +451,21 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
         qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
         qml.PauliX(wires=6)
         qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+
+    elif the_choice == 'fully_parametrized':
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.PauliX(wires=6)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+
     else:
-        print("Error, the_choice must be either 'parametrized' or 'unparametrized'")
+        print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
     qml.Hadamard(wires=6)
 
-    my_operator = bhabha_operator()
+    alpha = the_s_observable[0]*the_t_observable[0]
+    beta = the_s_observable[1]*the_s_observable[1]
+    my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     return qml.expval(my_operator @ qml.Projector(basis_state=[0], wires=6))
 
@@ -478,6 +491,11 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     :return: expectation value of a composite operator that is the prediction of the interference
     """
 
+    the_s_observable = the_s_params[-2:]
+    the_s_params = the_s_params[:-2]
+    the_t_observable = the_t_params[-2:]
+    the_t_params = the_t_params[:-2]
+
     qml.Hadamard(wires=6)
 
     if the_choice == 'parametrized':
@@ -490,12 +508,20 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
         qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
         qml.PauliX(wires=6)
         qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+
+    elif the_choice == 'fully_parametrized':
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.PauliX(wires=6)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+
     else:
-        print("Error, the_choice must be either 'parametrized' or 'unparametrized'")
+        print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
     qml.Hadamard(wires=6)
 
-    my_operator = bhabha_operator()
+    alpha = the_s_observable[0] * the_t_observable[0]
+    beta = the_s_observable[1] * the_s_observable[1]
+    my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     return qml.expval(my_operator @ qml.PauliZ(wires=6))

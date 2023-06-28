@@ -25,18 +25,16 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
     for s, t in zip(the_s_loader, the_t_loader):
         # converting for each batch any DataLoader item into a list of tuples of networkx graph
         # object and the corresponding output
-        s_element = (to_networkx(data=s[0][0], graph_attrs=['p_norm', 'theta'], node_attrs=['state'],
+        s_element = (to_networkx(data=s[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
                                  edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), s[1][0])
-        t_element = (to_networkx(data=t[0][0], graph_attrs=['p_norm', 'theta'], node_attrs=['state'],
+        t_element = (to_networkx(data=t[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
                                  edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), t[1][0])
 
         assert s_element[0].graph['theta'] == t_element[0].graph['theta'] and \
                s_element[0].graph['p_norm'] == t_element[0].graph['p_norm'], "the angles and the momenta must be the same"
 
-        angles.append(s_element[0].graph['theta'])
-        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params, the_n_layers, the_choice))
-
-    np.savetxt(the_file, output)
+        angles.append(s_element[0].graph['theta'].detach().numpy())
+        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params, the_n_layers, the_choice).detach().numpy())
 
     return output, angles
 
@@ -63,9 +61,9 @@ def matrix_squared(the_s_loader, s_params, the_t_loader, t_params, the_n_layers,
     for s, t in zip(the_s_loader, the_t_loader):
         # converting for each batch any DataLoader item into a list of tuples of networkx graph
         # object and the corresponding output
-        s_element = (to_networkx(data=s[0][0], graph_attrs=['p_norm', 'theta'], node_attrs=['state'],
+        s_element = (to_networkx(data=s[0][0], graph_attrs=['scattering','p_norm', 'theta'], node_attrs=['state'],
                                  edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), s[1][0])
-        t_element = (to_networkx(data=t[0][0], graph_attrs=['p_norm', 'theta'], node_attrs=['state'],
+        t_element = (to_networkx(data=t[0][0], graph_attrs=['scattering','p_norm', 'theta'], node_attrs=['state'],
                                  edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), t[1][0])
         assert s_element[0].graph['theta'] == t_element[0].graph['theta'] and \
                s_element[0].graph['p_norm'] == t_element[0].graph['p_norm'], "the angles and the momenta must be the same"

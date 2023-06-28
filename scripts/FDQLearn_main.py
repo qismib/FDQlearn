@@ -6,20 +6,19 @@ from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 
 
-def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: str,
-         the_test_file: str, choice: str, batch_size=20, the_elem=500):
+def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_val_file: str,
+         the_test_file: str, the_truth_file: str, the_param_file: str, the_standardization_file: str, choice: str,
+         batch_size=20, the_elem=500, the_bandwidth=0.5):
 
-    q_dataset = FeynmanDiagramDataset(the_file_path=the_file, the_n_elements=the_elem)
+    q_dataset = FeynmanDiagramDataset(the_file_path=the_dataset_file, the_n_elements=the_elem)
 
-    # Splitting q_dataset into training, test and validation set
-    training_set, test_set = train_test_split(q_dataset, train_size=0.8)
-    training_set, validation_set = train_test_split(training_set, train_size=0.8)
+    # Splitting q_dataset into training and validation set
+    training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
-    y_stat, p_stat = standardization(training_set, validation_set, test_set, 0.5)
+    y_stat, p_stat = standardization(training_set, validation_set, the_bandwidth)
 
     # Building DataLoaders for each set
     training_loader = DataLoader(training_set, batch_size=batch_size)
-    test_loader = DataLoader(test_set)
     validation_loader = DataLoader(validation_set)
 
     """
@@ -50,9 +49,12 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     final_params = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,
                               the_val_file, n_layers, choice)
     array_params = [i.detach().numpy() for i in final_params]
-    # np.savetxt('../data/training_test_results/'+choice + '_circuit_final_params.txt', array_params)
-    np.savetxt(the_test_file, array_params)
-    test_prediction(test_loader, final_params, n_layers, choice)
+    np.savetxt(the_param_file, array_params)
+    test_prediction(validation_loader, final_params, the_test_file, the_truth_file, n_layers, choice)
+
+    y_stat = [i.detach().numpy() for i in y_stat]
+    p_stat = [j.detach().numpy() for j in p_stat]
+    np.savetxt(the_standardization_file, np.concatenate((y_stat, p_stat, the_bandwidth)))
 
     return final_params
 
@@ -66,12 +68,16 @@ num_layers = 3
 num_epoch = 30
 batch = 20
 elements = 500
-file = '../data/dataset/QED_data_e_annih_e_s.csv'
-train_file = 'loss_prova.txt'  # '../data/training_test_results/parametrized_s_channel_train_loss.txt'
-val_file = 'val_prova.txt'  # '../data/training_test_results/parametrized_s_channel_val_loss.txt'
-test_pred_file = 'pred_prova.txt'  # '../data/interference/parametrized_channel_s_final_params.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_s.csv'
+train_file = '../data/training_test_results/parametrized_s_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_s_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_s_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_s_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_s_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_s_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
 # kind of feature map to use in training
 
-params = main(num_layers, num_epoch, file, train_file, val_file, test_pred_file, feature_map, batch, elements)
+params = main(num_layers, num_epoch, csv_file, train_file, val_file, test_pred_file, truth_file, final_params_file,
+              standardization_file, feature_map, batch, elements)

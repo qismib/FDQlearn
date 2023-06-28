@@ -34,9 +34,79 @@ here the_training_set must be a list tuple (graph, output)!!!!!
 """
 
 
-def train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
+def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the_n_epochs, the_train_file: str,
                the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
     """
+    Version of training function for a dataset composed by a single Feynman diagram
+    :param  the_training_loader: DataLoader object of the training set
+    :param the_validation_loader: DataLoader object of the validation set
+    :param the_init_weights: parameters to insert in the quantum circuit
+    :param  the_n_epochs: number of epochs of the training process
+    :param the_train_file: file where I save the training loss function per epoch
+    :param the_val_file: file where I save the validation loss function per epoch
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :return: the_weights: list of the final weights after the training
+    """
+
+    opt = optim.Adam([the_init_weights], lr=1e-2)  # initialization of the optimizer to use
+    the_weights = the_init_weights
+    epoch_loss = []
+    validation_loss = []
+
+    for epoch in range(the_n_epochs):
+
+        costs = []
+        starting_time = time.time()
+
+        for _, item in enumerate(the_training_loader):
+            mini_batch = []
+            # converting for each batch any DataLoader item into a list of tuples of networkx graph
+            # object and the corresponding output
+            mini_batch = [(to_networkx(data=item[0][i], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                       edge_attrs=['mass', 'spin', 'charge'], to_undirected=True),
+                           item[1][i]) for i in range(len(item[0]))]
+
+            def opt_func():  # defining an optimization function for the training of the model
+                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
+                mini_batch_truth = [element[1] for element in mini_batch]
+                loss = get_mse(mini_batch_predictions, mini_batch_truth)
+                costs.append(loss.item())
+                loss.backward()
+                return loss
+
+            opt.zero_grad()
+            opt.step(opt_func)
+
+        ending_time = time.time()
+        elapsed = ending_time - starting_time
+
+        training_loss = np.mean(costs)
+        epoch_loss.append(training_loss)
+
+        the_val = validation_qgnn(the_validation_loader, the_weights, the_choice, the_n_layers)
+        validation_loss.append(the_val)
+
+        if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-5:
+            the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
+            break
+
+        if epoch % 5 == 0:
+            res = [epoch, training_loss, the_val[0], elapsed]
+            print("Epoch: {:2d} | Training loss: {:3f} | Validation loss: {:3f} | Elapsed Time per Epoch: {:3f}".format(*res))
+
+    # saving the loss value for each epoch
+    np.savetxt(the_train_file, epoch_loss)
+    np.savetxt(the_val_file, validation_loss)
+
+    return the_weights
+
+
+def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
+               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+    """
+    Version of training function for a complete dataset (with more than 1 Feynman diagram), for
+    which I want to divide the loss of each diagram
     :param  the_training_loader: DataLoader object of the training set
     :param the_validation_s_loader: DataLoader object of the validation set of the Bhabha s-channel
     :param the_validation_t_loader: DataLoader object of the validation set of the Bhabha t-channel
@@ -123,6 +193,7 @@ here the_validation_set must be a list tuple (graph, output)!!!!!
 
 def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'parametrized', the_n_layers=3):
     """
+    Function for validation step (we do it after each epoch of the training process)
     :param the_validation_loader: DataLoader object of the validation set
     :param the_weights: parameters to insert in the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
@@ -154,7 +225,7 @@ function for predicting and plotting the test_set
 """
 
 
-def test_prediction(the_test_loader, the_params, the_test_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
     """
     this function compute the predicted outputs of unknonw datas (testset) and compare them
     to true output of them with a plot
@@ -188,6 +259,7 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_n_layer
     plt.legend(loc='lower right')
     plt.grid(True)
     plt.show()
+    np.savetxt(the_truth_file, truth)
     np.savetxt(the_test_file, targets)
 
 

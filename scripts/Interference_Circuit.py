@@ -2,21 +2,10 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 import torch
 from qgraph import FeynmanDiagramDataset
-from qgraph import interference, matrix_squared
+from qgraph import interference, matrix_squared, standard_scaling
 from torch_geometric.loader import DataLoader
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-
-
-def function(theta):
-    q_e = np.sqrt(4*np.pi/137)
-    return q_e**4*(1+np.cos(theta))**2/(2*(1-np.cos(theta)))
-
-
-def bhabha(theta):
-    q_e = np.sqrt(4 * np.pi / 137)
-    return q_e**4*(8/(1-np.cos(theta))**2 -(1-np.cos(theta))/4 + (1+np.cos(theta))**4/(2-2*np.cos(theta))**2)
-
 
 num_layers = 3
 num_epoch = 30
@@ -37,27 +26,25 @@ t_params = torch.tensor(t_array, dtype=torch.float)
 
 torch.manual_seed(12345)
 np.random.seed(12345)
+s_stat = torch.from_numpy(np.savetxt('../data/interference/parametrized_channel_s_standardization.txt'))
 s_channel = FeynmanDiagramDataset(the_file_path=file1)
+standard_scaling(s_channel, s_stat[0], s_stat[1], s_stat[2], s_stat[3], s_stat[4])
 torch.manual_seed(12345)
 np.random.seed(12345)
+t_stat = torch.from_numpy(np.savetxt('../data/interference/parametrized_channel_t_standardization.txt'))
 t_channel = FeynmanDiagramDataset(the_file_path=file2)
+standard_scaling(t_channel, t_stat[0], t_stat[1], t_stat[2], t_stat[3], t_stat[4])
 
 s_channel = DataLoader(s_channel, batch_size=1)
 t_channel = DataLoader(t_channel, batch_size=1)
 
 
-interf, angles = interference(s_channel, s_params, t_channel, t_params, num_layers, interference_file, feature_map)
+interf, angles_1 = interference(s_channel, s_params, t_channel, t_params, num_layers, interference_file, feature_map)
 
-x = np.linspace(0.5, np.pi, 1000)
-y = function(x)
+np.savetxt(interference_file, interf)
+np.savetxt('../data/interference/interference_angles.txt', angles_1)
 
-plt.plot(angles, interf, 'ro')
-plt.plot(x, y)
-plt.show()
+m_squared, angles_2 = matrix_squared(s_channel, s_params, t_channel, t_params, num_layers, total_matrix_file, feature_map)
 
-m_squared, angles = matrix_squared(s_channel, s_params, t_channel, t_params, num_layers, total_matrix_file, feature_map)
-z = bhabha(x)
-
-plt.plot(angles, m_squared)
-plt.plot(x, z)
-plt.show()
+np.savetxt(total_matrix_file, m_squared)
+np.savetxt('../data/interference/total_matrix_angles.txt', angles_2)

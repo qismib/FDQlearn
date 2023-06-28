@@ -20,18 +20,31 @@ def standardization(the_train_set, the_val_set, the_bandwidth=1.):
 
     assert len(y_values) == len(p_values), "these objects must have the same length"
 
-    for i in range(len(y_values)):
-        the_train_set[i][1] = ((y_values[i] - the_y_mean) / the_y_std) * the_bandwidth
-        the_train_set[i][0]['p_norm'] = ((p_values[i] - the_p_mean)/the_p_std)*the_bandwidth
+    standard_scaling(the_train_set, the_y_mean, the_y_std, the_p_mean, the_p_std, the_bandwidth)
 
-    val_y = [i[1] for i in the_val_set]
-    val_p_values = [i[0]['p_norm'] for i in the_val_set]
-    for i in range(len(the_val_set)):
-        the_val_set[i][1] = ((val_y[i] - the_y_mean)/the_y_std)*the_bandwidth
-        the_val_set[i][0]['p_norm'] = ((val_p_values[i] - the_p_mean) / the_p_std) * the_bandwidth
-
+    standard_scaling(the_val_set, the_y_mean, the_y_std, the_p_mean, the_p_std, the_bandwidth)
 
     the_y = [the_y_mean, the_y_std]
     the_p = [the_p_mean, the_p_std]
 
     return the_y, the_p
+
+
+def standard_scaling(the_set, the_y_mean, the_y_std, the_p_mean, the_p_std, the_bandwidth):
+    """
+    Standard scaling transformation
+    :param the_set: list of single datas for the training set
+    :param the_y_mean: mean value of the ground truth
+    :param the_y_std: standard deviation of the ground truth
+    :param the_p_mean: mean value of the momentum
+    :param the_p_std: standard deviation of the momentum
+    :param the_bandwidth: value of the bandwidth for the standardization process
+    :return: None
+    """
+
+    set_y = [i[1] for i in the_set]
+    set_p_values = [i[0]['p_norm'] for i in the_set]
+    for i in range(len(the_set)):
+        the_set[i][1] = ((set_y[i] - the_y_mean) / the_y_std) * the_bandwidth
+        the_set[i][0]['p_norm'] = ((set_p_values[i] - the_p_mean) / the_p_std) * the_bandwidth
+
