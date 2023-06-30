@@ -47,21 +47,25 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
         obs_params = 2  # number of parameters of the observable
         init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
-
     elif choice == 'fully_parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
         obs_params = 2  # number of parameters of the observable
         init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
+
+    print(init_params)
+
     final_params = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,
                               the_val_file, n_layers, choice)
+
+    print(final_params)
+
     array_params = [i.detach().numpy() for i in final_params]
     np.savetxt(the_param_file, array_params)
     test_prediction(validation_loader, final_params, the_test_file, the_truth_file, n_layers, choice)
 
-    y_stat = [i.detach().numpy() for i in y_stat]
-    p_stat = [j.detach().numpy() for j in p_stat]
+    the_bandwidth = np.array([the_bandwidth])
     np.savetxt(the_standardization_file, np.concatenate((y_stat, p_stat, the_bandwidth)))
 
     return final_params
@@ -76,13 +80,13 @@ num_layers = 3
 num_epoch = 30
 batch = 20
 elements = 500
-csv_file = '../data/dataset/QED_data_e_annih_e_s.csv'
-train_file = '../data/training_test_results/parametrized_s_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_s_channel_val_loss.txt'
-test_pred_file = '../data/training_test_results/parametrized_s_channel_predictions.txt'
-truth_file = '../data/training_test_results/parametrized_s_channel_ground_truth.txt'
-final_params_file = '../data/interference/parametrized_channel_s_final_params.txt'
-standardization_file = '../data/interference/parametrized_channel_s_standardization.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_t.csv'
+train_file = '../data/training_test_results/parametrized_t_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_t_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_t_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_t_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_t_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_t_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized" or "unparametrized", it indicates the
 # kind of feature map to use in training

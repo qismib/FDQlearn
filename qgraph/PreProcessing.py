@@ -24,8 +24,8 @@ def standardization(the_train_set, the_val_set, the_bandwidth=1.):
 
     standard_scaling(the_val_set, the_y_mean, the_y_std, the_p_mean, the_p_std, the_bandwidth)
 
-    the_y = [the_y_mean, the_y_std]
-    the_p = [the_p_mean, the_p_std]
+    the_y = np.array([the_y_mean, the_y_std])
+    the_p = np.array([the_p_mean, the_p_std])
 
     return the_y, the_p
 

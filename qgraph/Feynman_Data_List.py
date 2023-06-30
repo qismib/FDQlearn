@@ -14,7 +14,7 @@ def __get_node_features__(diagram):
     [Number of Nodes, 3]
     """
     x = ast.literal_eval(diagram.loc['x'])
-    x = torch.tensor(x, dtype=torch.float).view(-1, 3)
+    x = torch.tensor(x, dtype=torch.float, requires_grad=False).view(-1, 3)
     return x
 
 
@@ -30,7 +30,7 @@ def __get_edge_features__(diagram):
     for i in attr:
         i[2] = i[2] + i[3] / 2
         del i[3:]
-    return torch.tensor(attr, dtype=torch.float).view(-1, 3)
+    return torch.tensor(attr, dtype=torch.float, requires_grad=False).view(-1, 3)
 
 
 def __get_adj_list__(diagram):
@@ -44,7 +44,7 @@ def __get_adj_list__(diagram):
     for i in range(len(adj_list[0])):
         adj_list[0][i] -= 1
         adj_list[1][i] -= 1
-    x = torch.tensor(adj_list, dtype=torch.long).view(2, -1)
+    x = torch.tensor(adj_list, dtype=torch.long, requires_grad=False).view(2, -1)
     return torch.transpose(x, 0, 1)
 
 
@@ -55,22 +55,7 @@ def __get_targets__(diagram):
     :return:  torch tensor of the target y
     """
     y = diagram.loc['y']
-    return torch.tensor(y, dtype=torch.float)
-
-
-def __get_targets_norm__(diagram, the_y_mean, the_y_std, the_bandwidth=1):
-    """
-    function that returns the normalized target value of a single data of the dataset with normalization:
-    (y - the_y_min) / (the_y_max - the_y_min)
-    :param: diagram: row of the csv file of the dataset
-    :param: the_y_mean: mean value of y for the entire dataset
-    :param: the_y_std: standard deviation of y for the entire dataset
-    :param: the_bandwidth: variance of the standardized targets distribution
-    :return: torch tensor of the normalized target y
-    """
-    y = diagram.loc['y']
-    y = ((y - the_y_mean) /the_y_std)*the_bandwidth
-    return torch.tensor(y, dtype=torch.float)
+    return torch.tensor(y, dtype=torch.float, requires_grad=False)
 
 
 def __get_momentum__(diagram):
@@ -80,22 +65,7 @@ def __get_momentum__(diagram):
     :return:  torch tensor of the momentum p
     """
     p = diagram.loc['p']
-    return torch.tensor(p, dtype=torch.float)
-
-
-def __get_norm_momentum__(diagram, the_p_mean, the_p_std, the_bandwidth=1):
-    """
-    function that returns the normalized momentum value of a single data of the dataset with normalization:
-    (p - the_p_mean) / the_p_std
-    :param: diagram: row of the csv file of the dataset
-    :param: the_p_max: maximum value of p in the entire dataset
-    :param: the_p_min: minimum value of p in the entire dataset
-    :param: the_bandwidth: scaling of the variance
-    :return: torch tensor of the normalized momentum p
-    """
-    p = diagram.loc['p']
-    p = ((p - the_p_mean) / the_p_std)*the_bandwidth
-    return torch.tensor(p, dtype=torch.float)
+    return torch.tensor(p, dtype=torch.float, requires_grad=False)
 
 
 def __get_scattering_angle__(diagram):
@@ -105,7 +75,7 @@ def __get_scattering_angle__(diagram):
     :return:  torch tensor of the angle theta
     """
     theta = diagram.loc['theta']
-    return torch.tensor(theta, dtype=torch.float)
+    return torch.tensor(theta, dtype=torch.float, requires_grad=False)
 
 
 def __get_graph_index__(diagram):

@@ -49,8 +49,8 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     :return: the_weights: list of the final weights after the training
     """
 
-    opt = optim.Adam([the_init_weights], lr=1e-2)  # initialization of the optimizer to use
     the_weights = the_init_weights
+    opt = optim.Adam([the_weights], lr=1e-3)  # initialization of the optimizer to use
     epoch_loss = []
     validation_loss = []
 
@@ -119,8 +119,8 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
     :return: the_weights: list of the final weights after the training
     """
 
-    opt = optim.Adam([the_init_weights], lr=1e-2)  # initialization of the optimizer to use
     the_weights = the_init_weights
+    opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
     epoch_loss = []
     validation_s_loss = []
     validation_t_loss = []
@@ -241,8 +241,10 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
 
     # here I take each element in the_test_loader and reconvert it as a nextowrkx graph object
     for _, item in enumerate(the_test_loader):
-        pred = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
-                            edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
+
+        with torch.no_grad():
+            pred = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
         targets.append(pred)
 
     # convert each element from torch tensor into numpy array for the plot
@@ -367,14 +369,17 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
     :return: the_weights: list of the final weights after the training
     """
 
-    opt = optim.Adam([the_init_weights], lr=1e-2)  # initialization of the optimizer to use
     the_weights = the_init_weights
+    opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
     epoch_loss = []
     validation_s_loss = []
     validation_t_loss = []
     edge_params = [0.]*the_m
+    single_param = []
     for i in range(the_m):
         edge_params[i] = [the_weights[the_l+i].detach().numpy()]
+
+    single_param.append(the_weights[the_l+the_m].detach().numpy())
 
     assert len(edge_params) == the_m, 'non è corretto'
 
@@ -405,6 +410,8 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
         for i in range(the_m):
             edge_params[i].append(the_weights[the_l + i].detach().numpy())
 
+        single_param.append(the_weights[the_l+the_m].detach().numpy())
+
         ending_time = time.time()
         elapsed = ending_time - starting_time
 
@@ -416,7 +423,7 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
         validation_s_loss.append(the_s_val)
         validation_t_loss.append(the_t_val)
 
-        if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-8:
+        if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-5:
             the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
             break
 
@@ -441,10 +448,9 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
 
     for i in range(len(edge_params)):
         plt.plot(range(len(edge_params[i])), edge_params[i], label=str(i)+'-th edge parameter evolution')
+    plt.plot(range(len(single_param)), single_param, label='singleparameter of node feature encoding')
     plt.legend(loc='upper right')
     plt.show()
-
-    plt.plot(range(len(edge_params[0])), edge_params[0], label = '0-th edge parameter evolution')
 
     plt.ylabel('Values of the edge parameters during training')
     plt.xlabel('number of updates')

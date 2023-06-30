@@ -89,9 +89,9 @@ np.random.seed(12345)
 
 
 num_layers = 3
-num_epoch = 30
+num_epoch = 10  # 30
 batch = 20
-elements = 750
+elements = 500  # 750
 file = '../data/dataset/QED_data_qed.csv'
 train_file = '../data/training_test_results/parametrized_total_train_loss.txt'
 val_file = '../data/training_test_results/parametrized_total_val_loss.txt'

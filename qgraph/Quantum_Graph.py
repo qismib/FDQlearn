@@ -371,9 +371,18 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float), b=torch.t
         :param: the_wire: qubit on which the operator acts
         :param: a, b: positive real coefficient
         :return: an operator which is diagonal, hermitian and positive definite
-        """
+    """
+
     assert a != b, "a and b must be different"
-    return torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire) + torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire)
+
+    a = a.detach().numpy()
+    b = b.detach().numpy()
+
+    mat = np.array([[2, 0], [0, 1]])
+    obs = qml.Hermitian(mat, wires=the_wire)
+    H = qml.Hamiltonian((1,), (obs,))
+
+    return H
 
 ########################################################################################################################
 
@@ -390,6 +399,8 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     :param: the_choice: string that tells which feature map we want to use
     :return: expectation value of a diagonal, positive hermitian operator on the first qubit
     """
+
+    # the_circuit_params = the_params  # when I use PauliZ as observable
     the_circuit_params = the_params[:-2]
     the_observable_params = the_params[-2:]
 
@@ -403,8 +414,11 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
-    my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
-    return qml.expval(my_operator)
+    my_operator = qml.PauliZ(0)
+    # my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
+    output = qml.expval(my_operator)
+    output.requires_grad = True
+    return output
 
 
 ########################################################################################################################
@@ -466,6 +480,8 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     alpha = the_s_observable[0]*the_t_observable[0]
     beta = the_s_observable[1]*the_s_observable[1]
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
+
+    print(qml.expval(my_operator))
 
     return qml.expval(my_operator @ qml.Projector(basis_state=[0], wires=6))
 
