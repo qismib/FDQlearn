@@ -50,7 +50,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     """
 
     the_weights = the_init_weights
-    opt = optim.Adam([the_weights], lr=1e-3)  # initialization of the optimizer to use
+    opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
     epoch_loss = []
     validation_loss = []
 
