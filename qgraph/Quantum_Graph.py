@@ -1,6 +1,5 @@
 import pennylane as qml
 from pennylane import numpy as np
-import torch
 
 
 """
@@ -20,7 +19,7 @@ def RX_layer(the_G):
     encoding_angles = np.array([np.pi/2, np.pi, 3*np.pi/2])
 
     for the_node in the_G.nodes:
-        qml.RX(np.inner(encoding_angles, the_G.nodes[the_node]['state']),
+        qml.RX(np.inner(encoding_angles, np.array(the_G.nodes[the_node]['state'])),
                wires=the_node)
 
 
@@ -37,7 +36,7 @@ def ZZ_layer(the_G, the_feature: str):
     :return: None
     """
     for the_edge in the_G.edges:
-        the_feat = the_G.edges[the_edge][the_feature]
+        the_feat = np.array(the_G.edges[the_edge][the_feature])
         qml.IsingZZ(the_feat, wires=the_edge)
 
 
@@ -53,9 +52,9 @@ def parametric_ZZ_layer(the_G, the_params):
     :return: None
     """
     for the_edge in the_G.edges:
-        the_feat = torch.tensor([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'],
-                                 the_G.edges[the_edge]['charge']], dtype=torch.float)
-        qml.IsingZZ(torch.inner(the_feat, the_params), wires=the_edge)
+        the_feat = np.array([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'],
+                             the_G.edges[the_edge]['charge']])
+        qml.IsingZZ(np.inner(the_feat, the_params), wires=the_edge)
 
 
 def fully_parametric_ZZ_layer(the_G, the_params):
@@ -69,14 +68,14 @@ def fully_parametric_ZZ_layer(the_G, the_params):
     muon_params = the_params[6:]
 
     for the_edge in the_G.edges:
-        the_feat = torch.tensor([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'],
-                                 the_G.edges[the_edge]['charge']], dtype=torch.float)
+        the_feat = np.array([the_G.edges[the_edge]['mass'], the_G.edges[the_edge]['spin'],
+                                 the_G.edges[the_edge]['charge']])
         if the_feat[0] == 0:
-            qml.IsingZZ(torch.inner(the_feat, photon_params), wires=the_edge)
+            qml.IsingZZ(np.inner(the_feat, photon_params), wires=the_edge)
         elif 0.5 < the_feat[0] < 0.6:
-            qml.IsingZZ(torch.inner(the_feat, electron_params), wires=the_edge)
+            qml.IsingZZ(np.inner(the_feat, electron_params), wires=the_edge)
         elif 105 < the_feat[0] < 106:
-            qml.IsingZZ(torch.inner(the_feat, muon_params), wires=the_edge)
+            qml.IsingZZ(np.inner(the_feat, muon_params), wires=the_edge)
 
 
 """
@@ -90,8 +89,8 @@ def Kinetic_layer(the_G):
     :return: None
     """
     for the_node in the_G.nodes:
-        # qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)  # for a circuit with momentum
-        qml.U1(the_G.graph['theta'], wires=the_node) # for a circuit without momentum
+        # qml.U2(np.array(the_G.graph['p_norm']), np.array(the_G.graph['theta']), wires=the_node)  # for a circuit with momentum
+        qml.U1(np.array(the_G.graph['theta']), wires=the_node) # for a circuit without momentum
 
 
 ########################################################################################################################
@@ -366,8 +365,8 @@ def fully_parametric_qgnn(the_G, the_n_layers, the_params):
 
 ########################################################################################################################
 
-def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=True),
-                    b=torch.tensor(1., dtype=torch.float, requires_grad=True)):
+def bhabha_operator(the_wire=0, a=np.array(2., requires_grad=True),
+                    b=np.array(1., requires_grad=True)):
     """
         :param: the_wire: qubit on which the operator acts
         :param: a, b: positive real coefficient
@@ -396,7 +395,7 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
 dev1 = qml.device("default.qubit", wires=6)
 
 
-@qml.qnode(dev1, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev1, diff_method="parameter-shift")
 def expect_value(the_G, the_n_layers, the_params, the_choice):
     """
     :param: the_G: graph representing the Feynamn diagram
@@ -441,7 +440,7 @@ of Bhabha scattering (generalizable to other scattering processes)
 dev2 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev2, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev2, diff_method="parameter-shift")
 def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """
@@ -486,7 +485,7 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
 
     alpha = the_s_observable[0]*the_t_observable[0]
     beta = the_s_observable[1]*the_s_observable[1]
-    my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
+    my_operator = bhabha_operator(0, np.sqrt(alpha), np.sqrt(beta))
 
     print(qml.expval(my_operator))
 
@@ -500,7 +499,7 @@ scattering processes)
 dev3 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev3, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev3, diff_method="parameter-shift")
 def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """
@@ -545,6 +544,6 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
 
     alpha = the_s_observable[0] * the_t_observable[0]
     beta = the_s_observable[1] * the_s_observable[1]
-    my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
+    my_operator = bhabha_operator(0, np.sqrt(alpha), np.sqrt(beta))
 
     return qml.expval(my_operator @ qml.PauliZ(wires=6))

@@ -33,8 +33,8 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
         assert s_element[0].graph['theta'] == t_element[0].graph['theta'] and \
                s_element[0].graph['p_norm'] == t_element[0].graph['p_norm'], "the angles and the momenta must be the same"
 
-        angles.append(s_element[0].graph['theta'].detach().numpy())
-        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params, the_n_layers, the_choice).detach().numpy())
+        angles.append(s_element[0].graph['theta'])
+        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params, the_n_layers, the_choice))
 
     return output, angles
 

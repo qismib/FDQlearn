@@ -13,7 +13,7 @@ def __get_node_features__(diagram):
     [Number of Nodes, 3]
     """
     x = ast.literal_eval(diagram.loc['x'])
-    x = torch.tensor(x, dtype=torch.float, requires_grad=False).view(-1, 3)
+    x = np.array(x, requires_grad=False).view(-1, 3)
     return x
 
 
@@ -43,8 +43,8 @@ def __get_adj_list__(diagram):
     for i in range(len(adj_list[0])):
         adj_list[0][i] -= 1
         adj_list[1][i] -= 1
-    x = torch.tensor(adj_list, dtype=torch.long, requires_grad=False).view(2, -1)
-    return torch.transpose(x, 0, 1)
+    x = np.array(adj_list, requires_grad=False).view(2, -1)
+    return np.transpose(x, 0, 1)
 
 
 def __get_targets__(diagram):
@@ -54,7 +54,7 @@ def __get_targets__(diagram):
     :return:  torch tensor of the target y
     """
     y = diagram.loc['y']
-    return torch.tensor(y, dtype=torch.float, requires_grad=False)
+    return np.array(y, requires_grad=False)
 
 
 def __get_momentum__(diagram):
@@ -64,7 +64,7 @@ def __get_momentum__(diagram):
     :return:  torch tensor of the momentum p
     """
     p = diagram.loc['p']
-    return torch.tensor(p, dtype=torch.float, requires_grad=False)
+    return np.array(p, requires_grad=False)
 
 
 def __get_scattering_angle__(diagram):
@@ -74,7 +74,7 @@ def __get_scattering_angle__(diagram):
     :return:  torch tensor of the angle theta
     """
     theta = diagram.loc['theta']
-    return torch.tensor(theta, dtype=torch.float, requires_grad=False)
+    return np.array(theta, requires_grad=False)
 
 
 def __get_graph_index__(diagram):
