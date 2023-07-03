@@ -234,4 +234,3 @@ validation_loader = DataLoader(validation_set)
 model = HybridQgnnModel(num_nodes, num_edges, num_node_attr, num_edge_attr, node_embedding_size, edge_embedding_size, layer)
 
 final_params = training(model, training_loader, validation_loader, epochs, train_loss, val_loss)
-
