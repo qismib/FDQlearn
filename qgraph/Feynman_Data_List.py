@@ -3,7 +3,6 @@ import ast
 import torch
 import pandas as pd
 from pennylane import numpy as np
-from sklearn.preprocessing import StandardScaler
 
 
 def __get_node_features__(diagram):
@@ -30,7 +29,7 @@ def __get_edge_features__(diagram):
     for i in attr:
         i[2] = i[2] + i[3] / 2
         del i[3:]
-    return torch.tensor(attr, dtype=torch.float, requires_grad=False).view(-1, 3)
+    return np.array(attr, requires_grad=False).view(-1, 3)
 
 
 def __get_adj_list__(diagram):
