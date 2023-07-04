@@ -62,18 +62,19 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
             propagator += 1
     m = int((init + fin + (propagator - 1) / 2) * propagator)  # number of combinations I can connect nodes
     n = len(q_dataset.dataset[0][0].nodes)  # total number of nodes
+    obs_params = 2
 
     if choice == 'unparametrized':
         l=0
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1), dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'fully_parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
     final_params = check_train(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch, l, m,
