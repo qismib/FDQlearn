@@ -33,10 +33,10 @@ Optimization function of the network
 """
 
 
-def opt_func(the_batch, the_weights, the_n_layers, the_choice, the_costs):  # defining an optimization function for the training of the model
+def opt_func(the_weights, the_batch, the_n_layers, the_choice, the_costs):  # defining an optimization function for the training of the model
     """
-    :param the_batch: single batch of the dataset which is passed for the optimization
     :param the_weights: trainable parameters of the network to be trianed
+    :param the_batch: single batch of the dataset which is passed for the optimization
     :param the_n_layers: number of layers of the quantum graph neural network
     :param the_choice: choice of the feature map, either unparametrized, parametrized or fully-parametrized
     :param the_costs: list of the values of the cost function at each update of an epoch
@@ -53,16 +53,17 @@ here the_training_set must be a list tuple (graph, output)!!!!!
 """
 
 
-def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the_n_epochs, the_train_file: str,
-               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+def train_qgnn(the_training_set, the_validation_set, the_init_weights, the_n_epochs, the_train_file: str,
+               the_val_file: str, the_batch_size:int=1, the_n_layers=3, the_choice: str = 'parametrized'):
     """
     Version of training function for a dataset composed by a single Feynman diagram
-    :param  the_training_loader: DataLoader object of the training set
-    :param the_validation_loader: DataLoader object of the validation set
+    :param  the_training_set: FeynmanDiagramDataset object of the training set
+    :param the_validation_set: FeynmanDiagramDataset object of the validation set
     :param the_init_weights: parameters to insert in the quantum circuit
     :param  the_n_epochs: number of epochs of the training process
     :param the_train_file: file where I save the training loss function per epoch
     :param the_val_file: file where I save the validation loss function per epoch
+    :param the_batch_size: size of the batch used for the training set
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :return: the_weights: list of the final weights after the training
@@ -78,13 +79,13 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
         costs = []
         starting_time = time.time()
 
-        for _, item in enumerate(the_training_loader):
-            mini_batch = []
-            # converting for each batch any DataLoader item into a list of tuples of networkx graph
-            # object and the corresponding output
-            mini_batch = [(to_networkx(data=item[0][i], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+        for j in range(the_n_epochs//the_batch_size):
+
+            index = np.random.randint(0, len(the_training_set)-1, size=the_batch_size)
+
+            mini_batch = [(to_networkx(data=the_training_set[i][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
                                        edge_attrs=['mass', 'spin', 'charge'], to_undirected=True),
-                           item[1][i]) for i in range(len(item[0]))]
+                           the_training_set[i][1]) for i in index]
 
             the_weights, _, _, _, _ = opt.step(opt_func, the_weights, mini_batch, the_n_layers, the_choice, costs)
 
@@ -94,7 +95,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
         training_loss = np.mean(costs)
         epoch_loss.append(training_loss)
 
-        the_val = validation_qgnn(the_validation_loader, the_weights, the_choice, the_n_layers)
+        the_val = validation_qgnn(the_validation_set, the_weights, the_choice, the_n_layers)
         validation_loss.append(the_val)
 
         if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-5:
@@ -112,14 +113,14 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     return the_weights
 
 
-def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
-                      the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+def merged_train_qgnn(the_training_set, the_validation_s_set, the_validation_t_set, the_init_weights, the_n_epochs,
+                      the_train_file: str, the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
     """
     Version of training function for a complete dataset (with more than 1 Feynman diagram), for
     which I want to divide the loss of each diagram
-    :param  the_training_loader: DataLoader object of the training set
-    :param the_validation_s_loader: DataLoader object of the validation set of the Bhabha s-channel
-    :param the_validation_t_loader: DataLoader object of the validation set of the Bhabha t-channel
+    :param  the_training_set: FeynmanDiagramDataset object of the training set
+    :param the_validation_s_set: FeynmanDiagramDataset object of the validation set of the Bhabha s-channel
+    :param the_validation_t_set: FeynmanDiagramDataset object of the validation set of the Bhabha t-channel
     :param the_init_weights: parameters to insert in the quantum circuit
     :param  the_n_epochs: number of epochs of the training process
     :param the_train_file: file where I save the training loss function per epoch
@@ -140,7 +141,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
         costs = []
         starting_time = time.time()
 
-        for _, item in enumerate(the_training_loader):
+        for _, item in enumerate(the_training_set):
             mini_batch = []
             # converting for each batch any DataLoader item into a list of tuples of networkx graph
             # object and the corresponding output
@@ -156,8 +157,8 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
         training_loss = np.mean(costs)
         epoch_loss.append(training_loss)
 
-        the_s_val = validation_qgnn(the_validation_s_loader, the_weights, the_choice, the_n_layers)
-        the_t_val = validation_qgnn(the_validation_t_loader, the_weights, the_choice, the_n_layers)
+        the_s_val = validation_qgnn(the_validation_s_set, the_weights, the_choice, the_n_layers)
+        the_t_val = validation_qgnn(the_validation_t_set, the_weights, the_choice, the_n_layers)
         validation_s_loss.append(the_s_val)
         validation_t_loss.append(the_t_val)
 
@@ -192,27 +193,23 @@ here the_validation_set must be a list tuple (graph, output)!!!!!
 """
 
 
-def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'parametrized', the_n_layers=3):
+def validation_qgnn(the_validation_set, the_weights, the_choice: str = 'parametrized', the_n_layers=3):
     """
     Function for validation step (we do it after each epoch of the training process)
-    :param the_validation_loader: DataLoader object of the validation set
+    :param the_validation_set: FeynmanDiagramDataset object of the validation set
     :param the_weights: parameters to insert in the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :param the_n_layers: numbers of layers of the quantum circuit
     :return: the_validation_loss: list of loss values for each point of the validation set after prediction
     """
 
-    the_validation_set = []
-
-    for _, item in enumerate(the_validation_loader):
-        val = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
-                           edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
-        the_validation_set.append(val)
+    validation_list = [(to_networkx(data=element[0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                    edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), element[1]) for element in the_validation_set]
 
     # define a list of ground truth values
-    the_validation_truth = [element[1] for element in the_validation_set]
+    the_validation_truth = [element[1] for element in validation_list]
     # define a list of prediction
-    the_validation_predictions = predict(the_validation_set, the_weights, the_n_layers, the_choice)
+    the_validation_predictions = predict(validation_list, the_weights, the_n_layers, the_choice)
     # the_validation_truth = np.array(the_validation_truth, dtype=object)
     assert len(the_validation_truth) == len(the_validation_predictions), "The number of predictions and true labels is not equal"
 
@@ -226,11 +223,11 @@ function for predicting and plotting the test_set
 """
 
 
-def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+def test_prediction(the_test_set, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
     """
     this function compute the predicted outputs of unknonw datas (testset) and compare them
     to true output of them with a plot
-    :param: the_test_loader: DataLoader object of the test set
+    :param: the_test_set: FeynmnaDiagramDataset object of the test set
     :param: the_params: parameters to insert in the quantum circuit
     :param: the_test_file: file where I save the predictions of the test set
     :param: the_n_layers: numbers of layers of the quantum circuit
@@ -241,11 +238,9 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     targets = []
 
     # here I take each element in the_test_loader and reconvert it as a nextowrkx graph object
-    for _, item in enumerate(the_test_loader):
-
-        pred = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
-                            edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
-        targets.append(pred)
+    pred = [(to_networkx(data=element[0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                         edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), element[1]) for element in the_test_set]
+    targets.append(pred)
 
     # convert each element from torch tensor into numpy array for the plot
     truth = [i[1] for i in targets]  # here I define a list of the true values
@@ -265,11 +260,11 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     np.savetxt(the_test_file, targets)
 
 
-def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, the_choice: str = 'parametrized'):
+def total_test_prediction(the_test_set, the_params, the_y, the_n_layers=3, the_choice: str = 'parametrized'):
     """
     this function compute the predicted outputs of unknonw datas (testset) and compare them
     to true output of them with a plot
-    :param: the_test_loader: DataLoader object of the test set
+    :param: the_test_loader: FeynmanDiagramDataset object of the test set
     :param: the_params: parameters to insert in the quantum circuit
     :param: the_y: list with the mean and the standard deviation of the output for the inverse transformation
     :param: the_n_layers: numbers of layers of the quantum circuit
@@ -282,7 +277,7 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     targets_e_e_t = []
 
     # here I take each element in the_test_loader and reconvert it as a nextowrkx graph object
-    for _, item in enumerate(the_test_loader):
+    for _, item in enumerate(the_test_set):
         pred = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
                             edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
         # now I divide the kind of feynman diagrams to make predictions
@@ -351,13 +346,13 @@ trial version to check the behaviour of the  parameters associated to the ZZ-lay
 """
 
 
-def check_train(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs,
+def check_train(the_training_set, the_validation_s_set, the_validation_t_set, the_init_weights, the_n_epochs,
                 the_l: int, the_m: int, the_train_file: str, the_val_file: str, the_n_layers=3,
                 the_choice: str = 'parametrized'):
     """
-    :param  the_training_loader: DataLoader object of the training set
-    :param the_validation_s_loader: DataLoader object of the validation set of the Bhabha s-channel
-    :param the_validation_t_loader: DataLoader object of the validation set of the Bhabha t-channel
+    :param  the_training_set: FeynmanDiagramDataset object of the training set
+    :param the_validation_s_set: FeynmanDiagramDataset object of the validation set of the Bhabha s-channel
+    :param the_validation_t_set: FeynmanDiagramDataset object of the validation set of the Bhabha t-channel
     :param the_init_weights: parameters to insert in the quantum circuit
     :param  the_n_epochs: number of epochs of the training process
     :param  the_l: number of parameters in the feature map
@@ -388,7 +383,7 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
         costs = []
         starting_time = time.time()
 
-        for _, item in enumerate(the_training_loader):
+        for _, item in enumerate(the_training_set):
             mini_batch = []
             # converting for each batch any DataLoader item into a list of tuples of networkx graph
             # object and the corresponding output
@@ -409,8 +404,8 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
         training_loss = np.mean(costs)
         epoch_loss.append(training_loss)
 
-        the_s_val = validation_qgnn(the_validation_s_loader, the_weights, the_choice, the_n_layers)
-        the_t_val = validation_qgnn(the_validation_t_loader, the_weights, the_choice, the_n_layers)
+        the_s_val = validation_qgnn(the_validation_s_set, the_weights, the_choice, the_n_layers)
+        the_t_val = validation_qgnn(the_validation_t_set, the_weights, the_choice, the_n_layers)
         validation_s_loss.append(the_s_val)
         validation_t_loss.append(the_t_val)
 

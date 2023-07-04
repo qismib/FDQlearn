@@ -375,9 +375,6 @@ def bhabha_operator(the_wire=0, a=np.array(2., requires_grad=True),
 
     assert a != b, "a and b must be different"
 
-    a = a.detach().numpy()
-    b = b.detach().numpy()
-
     # H = torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire) + torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire)
     # H = qml.matrix(H)
     # H = qml.Hermitian(H, wires=the_wire)

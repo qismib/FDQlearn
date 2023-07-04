@@ -2,7 +2,6 @@ from pennylane import numpy as np
 import torch
 from qgraph import FeynmanDiagramDataset, standardization
 from qgraph import train_qgnn, test_prediction
-from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 
 
@@ -16,10 +15,6 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
     training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
     y_stat, p_stat = standardization(training_set, validation_set, the_bandwidth)
-
-    # Building DataLoaders for each set
-    training_loader = DataLoader(training_set, batch_size=batch_size)
-    validation_loader = DataLoader(validation_set)
 
     """
     CALCULATING THE NUMBER OF PARAMETERS I HAVE TO DEFINE FOR THE QGNN
@@ -40,7 +35,7 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
     if choice == 'unparametrized':
         obs_params = 2  # number of parameters of the observable
-        init_params = 0.01 * np.random.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * np.random.randn(n_layers * (m + n + 1) + obs_params)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
@@ -56,14 +51,14 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
     print(init_params)
 
-    final_params = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,
-                              the_val_file, n_layers, choice)
+    final_params = train_qgnn(training_set, validation_set, init_params, max_epoch, the_train_file,
+                              the_val_file, batch_size, n_layers, choice)
 
     print(final_params)
 
     array_params = [i for i in final_params]
     np.savetxt(the_param_file, array_params)
-    test_prediction(validation_loader, final_params, the_test_file, the_truth_file, n_layers, choice)
+    test_prediction(validation_set, final_params, the_test_file, the_truth_file, n_layers, choice)
 
     the_bandwidth = np.array([the_bandwidth])
     np.savetxt(the_standardization_file, np.concatenate((y_stat, p_stat, the_bandwidth)))
