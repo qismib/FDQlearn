@@ -1,6 +1,7 @@
 import pennylane as qml
 from pennylane import numpy as np
 import torch
+from pennylane.ops.op_math import Sum
 
 
 """
@@ -366,7 +367,8 @@ def fully_parametric_qgnn(the_G, the_n_layers, the_params):
 
 ########################################################################################################################
 
-def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float), b=torch.tensor(1., dtype=torch.float)):
+def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=True),
+                    b=torch.tensor(1., dtype=torch.float, requires_grad=True)):
     """
         :param: the_wire: qubit on which the operator acts
         :param: a, b: positive real coefficient
@@ -375,12 +377,7 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float), b=torch.t
 
     assert a != b, "a and b must be different"
 
-    a = a.detach().numpy()
-    b = b.detach().numpy()
-
-    mat = np.array([[2, 0], [0, 1]])
-    obs = qml.Hermitian(mat, wires=the_wire)
-    H = qml.Hamiltonian((1,), (obs,))
+    H = Sum(torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire), torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire))
 
     return H
 
@@ -414,8 +411,8 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
-    my_operator = qml.PauliZ(0)
-    # my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
+    # my_operator = qml.PauliZ(0)
+    my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
     output = qml.expval(my_operator)
     output.requires_grad = True
     return output
