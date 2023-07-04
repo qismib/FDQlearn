@@ -13,7 +13,7 @@ def __get_node_features__(diagram):
     [Number of Nodes, 3]
     """
     x = ast.literal_eval(diagram.loc['x'])
-    x = np.array(x, requires_grad=False).view(-1, 3)
+    x = np.array(x, requires_grad=False).reshape(-1, 3)
     return x
 
 
@@ -29,7 +29,7 @@ def __get_edge_features__(diagram):
     for i in attr:
         i[2] = i[2] + i[3] / 2
         del i[3:]
-    return np.array(attr, requires_grad=False).view(-1, 3)
+    return np.array(attr, requires_grad=False).reshape(-1, 3)
 
 
 def __get_adj_list__(diagram):
@@ -43,8 +43,8 @@ def __get_adj_list__(diagram):
     for i in range(len(adj_list[0])):
         adj_list[0][i] -= 1
         adj_list[1][i] -= 1
-    x = np.array(adj_list, requires_grad=False).view(2, -1)
-    return np.transpose(x, 0, 1)
+    x = np.array(adj_list, requires_grad=False).reshape(2, -1)
+    return x.transpose(1,0)
 
 
 def __get_targets__(diagram):

@@ -40,17 +40,17 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
     if choice == 'unparametrized':
         obs_params = 2  # number of parameters of the observable
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * np.random.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
         obs_params = 2  # number of parameters of the observable
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * np.random.randn(n_layers * (m + n + 1) + l + obs_params)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'fully_parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
         obs_params = 2  # number of parameters of the observable
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * np.random.randn(n_layers * (m + n + 1) + 3*l + obs_params)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
 
@@ -61,7 +61,7 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
     print(final_params)
 
-    array_params = [i.detach().numpy() for i in final_params]
+    array_params = [i for i in final_params]
     np.savetxt(the_param_file, array_params)
     test_prediction(validation_loader, final_params, the_test_file, the_truth_file, n_layers, choice)
 
@@ -72,7 +72,6 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
 
 # fixing the seeds:
-torch.manual_seed(12345)
 np.random.seed(12345)
 
 

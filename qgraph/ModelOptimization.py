@@ -1,7 +1,6 @@
 import time
+import pennylane as qml
 from pennylane import numpy as np
-import torch
-from torch import optim
 from torch_geometric.utils import to_networkx
 from qgraph import expect_value
 import matplotlib.pyplot as plt
@@ -30,6 +29,26 @@ def get_mse(predictions, ground_truth):
 
 
 """
+Optimization function of the network
+"""
+
+
+def opt_func(the_batch, the_weights, the_n_layers, the_choice, the_costs):  # defining an optimization function for the training of the model
+    """
+    :param the_batch: single batch of the dataset which is passed for the optimization
+    :param the_weights: trainable parameters of the network to be trianed
+    :param the_n_layers: number of layers of the quantum graph neural network
+    :param the_choice: choice of the feature map, either unparametrized, parametrized or fully-parametrized
+    :param the_costs: list of the values of the cost function at each update of an epoch
+    """
+    mini_batch_predictions = predict(the_batch, the_weights, the_n_layers, the_choice)
+    mini_batch_truth = [element[1] for element in the_batch]
+    loss = get_mse(mini_batch_predictions, mini_batch_truth)
+    the_costs.append(loss.item())
+    return loss
+
+
+"""
 here the_training_set must be a list tuple (graph, output)!!!!!
 """
 
@@ -50,7 +69,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     """
 
     the_weights = the_init_weights
-    opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+    opt = qml.AdamOptimizer(1e-2)  # initialization of the optimizer to use
     epoch_loss = []
     validation_loss = []
 
@@ -67,16 +86,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
                                        edge_attrs=['mass', 'spin', 'charge'], to_undirected=True),
                            item[1][i]) for i in range(len(item[0]))]
 
-            def opt_func():  # defining an optimization function for the training of the model
-                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
-                mini_batch_truth = [element[1] for element in mini_batch]
-                loss = get_mse(mini_batch_predictions, mini_batch_truth)
-                costs.append(loss.item())
-                loss.backward()
-                return loss
-
-            opt.zero_grad()
-            opt.step(opt_func)
+            the_weights, _, _, _, _ = opt.step(opt_func, the_weights, mini_batch, the_n_layers, the_choice, costs)
 
         ending_time = time.time()
         elapsed = ending_time - starting_time
@@ -103,7 +113,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
 
 
 def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
-               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+                      the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
     """
     Version of training function for a complete dataset (with more than 1 Feynman diagram), for
     which I want to divide the loss of each diagram
@@ -120,7 +130,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
     """
 
     the_weights = the_init_weights
-    opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+    opt = qml.AdamOptimizer(1e-2)  # initialization of the optimizer to use
     epoch_loss = []
     validation_s_loss = []
     validation_t_loss = []
@@ -138,16 +148,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
                                        edge_attrs=['mass', 'spin', 'charge'], to_undirected=True),
                            item[1][i]) for i in range(len(item[0]))]
 
-            def opt_func():  # defining an optimization function for the training of the model
-                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
-                mini_batch_truth = [element[1] for element in mini_batch]
-                loss = get_mse(mini_batch_predictions, mini_batch_truth)
-                costs.append(loss.item())
-                loss.backward()
-                return loss
-
-            opt.zero_grad()
-            opt.step(opt_func)
+            the_weights, _, _, _, _ = opt.step(opt_func, the_weights, mini_batch, the_n_layers, the_choice, costs)
 
         ending_time = time.time()
         elapsed = ending_time - starting_time
@@ -209,7 +210,7 @@ def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'param
         the_validation_set.append(val)
 
     # define a list of ground truth values
-    the_validation_truth = [element[1].detach().numpy() for element in the_validation_set]
+    the_validation_truth = [element[1] for element in the_validation_set]
     # define a list of prediction
     the_validation_predictions = predict(the_validation_set, the_weights, the_n_layers, the_choice)
     # the_validation_truth = np.array(the_validation_truth, dtype=object)
@@ -217,7 +218,7 @@ def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'param
 
     the_validation_loss = get_mse(the_validation_predictions, the_validation_truth)
 
-    return the_validation_loss.detach().numpy()
+    return the_validation_loss
 
 
 """
@@ -242,16 +243,15 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     # here I take each element in the_test_loader and reconvert it as a nextowrkx graph object
     for _, item in enumerate(the_test_loader):
 
-        with torch.no_grad():
-            pred = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
-                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
+        pred = (to_networkx(data=item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                            edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), item[1][0])
         targets.append(pred)
 
     # convert each element from torch tensor into numpy array for the plot
-    truth = [i[1].detach().numpy() for i in targets]  # here I define a list of the true values
+    truth = [i[1] for i in targets]  # here I define a list of the true values
     angles = [i[0].graph['theta'] for i in targets]  # here I build a list of scattering angles values
     targets = predict(targets, the_params, the_n_layers, the_choice)
-    targets = [i.detach().numpy() for i in targets]  # here I build a list of predicted outputs
+    targets = [i for i in targets]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.plot(angles, targets, 'ro', label='predictions')
@@ -294,10 +294,10 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
             targets_e_e_t.append(pred)  # t-channel for Bhabha scattering
 
     # convert each element from torch tensor into numpy array for the plot
-    truth_e_mu_s = [(i[1]*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_mu_s]  # here I define a list of the true values
+    truth_e_mu_s = [(i[1]*the_y[1] + the_y[0])for i in targets_e_mu_s]  # here I define a list of the true values
     angles_e_mu_s = [i[0].graph['theta'] for i in targets_e_mu_s]  # here I build a list of scattering angles values
     targets_e_mu_s = predict(targets_e_mu_s, the_params, the_n_layers, the_choice)
-    targets_e_mu_s = [(i*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_mu_s]  # here I build a list of predicted outputs
+    targets_e_mu_s = [(i*the_y[1] + the_y[0]) for i in targets_e_mu_s]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.figure(1)
@@ -311,10 +311,10 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     np.savetxt('../data/training_test_results/test_outcomes_e_mu_s.txt', targets_e_mu_s)
 
     # convert each element from torch tensor into numpy array for the plot
-    truth_e_e_s = [(i[1]*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_s]  # here I define a list of the true values
+    truth_e_e_s = [(i[1]*the_y[1] + the_y[0]) for i in targets_e_e_s]  # here I define a list of the true values
     angles_e_e_s = [i[0].graph['theta'] for i in targets_e_e_s]  # here I build a list of scattering angles values
     targets_e_e_s = predict(targets_e_e_s, the_params, the_n_layers, the_choice)
-    targets_e_e_s = [(i*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_s]  # here I build a list of predicted outputs
+    targets_e_e_s = [(i*the_y[1] + the_y[0]) for i in targets_e_e_s]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.figure(2)
@@ -328,11 +328,11 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     np.savetxt('../data/training_test_results/test_outcomes_e_e_s.txt', targets_e_e_s)
 
     # convert each element from torch tensor into numpy array for the plot
-    truth_e_e_t = [(i[1]*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_t]  # here I define a list of the true values
+    truth_e_e_t = [(i[1]*the_y[1] + the_y[0]) for i in targets_e_e_t]  # here I define a list of the true values
     angles_e_e_t = [i[0].graph['theta'] for i in targets_e_e_t]  # here I build a list of scattering angles values
     targets_e_e_t = predict(targets_e_e_t, the_params, the_n_layers, the_choice)
 
-    targets_e_e_t = [(i*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_t]  # here I build a list of predicted outputs
+    targets_e_e_t = [(i*the_y[1] + the_y[0])for i in targets_e_e_t]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.figure(3)
@@ -370,16 +370,16 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
     """
 
     the_weights = the_init_weights
-    opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+    opt = qml.AdamOptimizer(1e-2)  # initialization of the optimizer to use
     epoch_loss = []
     validation_s_loss = []
     validation_t_loss = []
     edge_params = [0.]*the_m
     single_param = []
     for i in range(the_m):
-        edge_params[i] = [the_weights[the_l+i].detach().numpy()]
+        edge_params[i] = [the_weights[the_l+i]]
 
-    single_param.append(the_weights[the_l+the_m].detach().numpy())
+    single_param.append(the_weights[the_l+the_m])
 
     assert len(edge_params) == the_m, 'non è corretto'
 
@@ -396,21 +396,12 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
                                        edge_attrs=['mass', 'spin', 'charge'], to_undirected=True),
                            item[1][i]) for i in range(len(item[0]))]
 
-            def opt_func():  # defining an optimization function for the training of the model
-                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
-                mini_batch_truth = [element[1] for element in mini_batch]
-                loss = get_mse(mini_batch_predictions, mini_batch_truth)
-                costs.append(loss.item())
-                loss.backward()
-                return loss
-
-            opt.zero_grad()
-            opt.step(opt_func)
+            the_weights, _, _, _, _ = opt.step(opt_func, the_weights, mini_batch, the_n_layers, the_choice, costs)
 
         for i in range(the_m):
-            edge_params[i].append(the_weights[the_l + i].detach().numpy())
+            edge_params[i].append(the_weights[the_l + i])
 
-        single_param.append(the_weights[the_l+the_m].detach().numpy())
+        single_param.append(the_weights[the_l+the_m])
 
         ending_time = time.time()
         elapsed = ending_time - starting_time
