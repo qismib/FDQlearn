@@ -375,14 +375,14 @@ def bhabha_operator(the_wire=0, a=np.array(2., requires_grad=True),
 
     assert a != b, "a and b must be different"
 
-    # H = torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire) + torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire)
-    # H = qml.matrix(H)
-    # H = qml.Hermitian(H, wires=the_wire)
+    H = np.abs(a)*qml.Projector(basis_state=[0], wires=the_wire) + np.abs(b)*qml.Projector(basis_state=[1], wires=the_wire)
+    H = qml.matrix(H)
+    H = qml.Hermitian(H, wires=the_wire)
     # H = qml.Hamiltonian((1,), (H,))
 
-    mat = np.array([[a, 0], [0, b]])
-    obs = qml.Hermitian(mat, wires=the_wire)
-    H = qml.Hamiltonian((1,), (obs,))
+    # mat = np.array([[a, 0], [0, b]])
+    # obs = qml.Hermitian(mat, wires=the_wire)
+    # H = qml.Hamiltonian((1,), (obs,))
 
     return H
 
@@ -392,7 +392,7 @@ def bhabha_operator(the_wire=0, a=np.array(2., requires_grad=True),
 dev1 = qml.device("default.qubit", wires=6)
 
 
-@qml.qnode(dev1, diff_method="parameter-shift")
+@qml.qnode(dev1, interface='autograd', diff_method="parameter-shift")
 def expect_value(the_G, the_n_layers, the_params, the_choice):
     """
     :param: the_G: graph representing the Feynamn diagram
@@ -419,8 +419,8 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     # my_operator = qml.PauliZ(0)
     my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
     output = qml.expval(my_operator)
-    output.requires_grad = True
     print(output)
+    output.requires_grad = True
     return output
 
 
@@ -437,7 +437,7 @@ of Bhabha scattering (generalizable to other scattering processes)
 dev2 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev2, diff_method="parameter-shift")
+@qml.qnode(dev2, interface='autograd', diff_method="parameter-shift")
 def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """
@@ -496,7 +496,7 @@ scattering processes)
 dev3 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev3, diff_method="parameter-shift")
+@qml.qnode(dev3, interface='autograd', diff_method="parameter-shift")
 def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """

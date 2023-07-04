@@ -14,6 +14,8 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :return: list of predictions
     """
+    for i in the_dataset:
+        print(type(i[0]))
     return [expect_value(element[0], the_n_layers, the_weights, the_choice) for element in the_dataset]
 
 
