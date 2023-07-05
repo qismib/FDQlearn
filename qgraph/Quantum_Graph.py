@@ -376,17 +376,17 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
     """
 
     assert a != b, "a and b must be different"
-    # a = torch.tensor(2.)
-    # b = torch.tensor(1.)
+    a = np.array(a.detach().numpy())
+    b = np.array(b.detach().numpy())
 
-    H = Sum(torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire), torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire))
+    # H = Sum(torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire), torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire))
     # H = torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire)
 
-    # mat = np.array([[np.abs(a.detach().numpy()), 0], [0, np.abs(b.detach().numpy())]])
-    # obs = qml.Hermitian(mat, wires=[0])
+    mat = np.array([[np.abs(a), 0], [0, np.abs(b)]])
+    obs = qml.Hermitian(mat, wires=[0])
     # H = qml.Hamiltonian((1,), (obs,))
 
-    return H
+    return obs
 
 ########################################################################################################################
 
