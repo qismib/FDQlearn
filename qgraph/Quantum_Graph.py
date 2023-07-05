@@ -382,7 +382,7 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
     # H = Sum(torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire), torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire))
     # H = torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire)
 
-    mat = np.array([[np.abs(a), 0], [0, np.abs(b)]])
+    mat = np.array([[np.abs(a, requires_grad=True), 0], [0, np.abs(b, requires_grad=True)]])
     H = qml.Hermitian(mat, wires=[0])
     # obs = qml.Hamiltonian((1,), (H,))
 
