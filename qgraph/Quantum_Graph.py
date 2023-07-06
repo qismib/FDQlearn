@@ -418,10 +418,10 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
-    # my_operator = qml.PauliZ(0)
-    my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
+    my_operator = qml.PauliZ(0)
+    # my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
     output = qml.expval(my_operator)
-    output.requires_grad = True
+    # output.requires_grad = True
     return output
 
 

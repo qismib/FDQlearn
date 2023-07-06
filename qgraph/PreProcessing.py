@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 
 
-def standardization(the_train_set, the_val_set, the_bandwidth=1.):
+def standardization(train_set, val_set, bandwidth=0.5):
     """
     Function for standard scaling of one feature of the dataset list
     :param: the_train_set: list of single datas for the training set
@@ -11,21 +11,21 @@ def standardization(the_train_set, the_val_set, the_bandwidth=1.):
     :param: the_bandwidth: value of the bandwidth for the standardization process
     """
 
-    y_values = [i[1] for i in the_train_set]
-    p_values = [i[0]['p_norm'] for i in the_train_set]
-    the_y_mean = np.mean(y_values)
-    the_y_std = np.std(y_values)
-    the_p_mean = np.mean(p_values)
-    the_p_std = np.std(p_values)
+    y_values = [i[1] for i in train_set]
+    p_values = [i[0]['p_norm'] for i in train_set]
+    y_mean = np.mean(y_values)
+    y_std = np.std(y_values)
+    p_mean = np.mean(p_values)
+    p_std = np.std(p_values)
 
     assert len(y_values) == len(p_values), "these objects must have the same length"
 
-    standard_scaling(the_train_set, the_y_mean, the_y_std, the_p_mean, the_p_std, the_bandwidth)
+    standard_scaling(train_set, y_mean, y_std, p_mean, p_std, bandwidth)
 
-    standard_scaling(the_val_set, the_y_mean, the_y_std, the_p_mean, the_p_std, the_bandwidth)
+    standard_scaling(val_set, y_mean, y_std, p_mean, p_std, bandwidth)
 
-    the_y = np.array([the_y_mean, the_y_std])
-    the_p = np.array([the_p_mean, the_p_std])
+    the_y = np.array([y_mean, y_std])
+    the_p = np.array([p_mean, p_std])
 
     return the_y, the_p
 
