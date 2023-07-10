@@ -285,6 +285,56 @@ def qgnn_ansatz(the_G, the_n_layers, the_params):
             qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
 
 
+"""
+FULLY CONNECTED ANSATZ CIRCUIT FOR THE QGNN
+"""
+
+
+def fully_connected_ansatz(the_G, the_n_layers, the_params):
+    """
+    Trainable ansatz having l * (n*(n-1)/2 +n + 1 (2)) parameters, where n is the number of vertices,
+    # l is the number of layers and +1 (+2) for theta (and p) parameters
+    :param: the_G: graph representing a feynman diagram
+    :param: the_n_layers: number of layers (depth of the circuit)
+    :param: the_params: value of the parameters
+    """
+
+    # number of edges of the graph
+    the_n = len(the_G.nodes)
+    permutations = the_n * (the_n - 1) / 2
+
+    # number of parameters with the momentum p
+    # assert len(the_params) == the_n_layers * (permutations + the_n + 2), "Number of parameters is wrong"
+
+    # number of parameters without the momentum p
+    assert len(the_params) == the_n_layers * (permutations + the_n + 1), "Number of parameters is wrong"
+
+    for i in range(the_n_layers):
+        # here I divide the_layer_params list into a list for parameters that will act on edges,
+        # parameters that will act on nodes and the ones for momentum and angle features
+        the_layer_params = the_params[i * (permutations + the_n + 1):(i + 1) * (permutations + the_n + 1)]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_edge_params = the_layer_params[:permutations]
+        the_nodes_params = the_layer_params[permutations:-1]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_kinetic_params = the_layer_params[-1:]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+
+        # ind is the index of the_edge_params, trainable parameters.
+        ind = 0
+
+        # I'm building parametrized ZZ-gates that connect each initial state (node feature=[1,0,0])
+        # to every propagator state (node feature = [0,1,0])
+        for node in range(the_n-1):
+            for comb in range(node+1, the_n):
+                qml.IsingZZ(the_edge_params[ind], wires=(node, comb))
+                ind += 1
+
+        # for each node of the graph I perform a parametrized X-rotation and a parametrized
+        # U2-gate (rotation and phase-shift on a single qubit)
+        for j in the_G.nodes:
+            qml.RX(the_nodes_params[j], wires=j)
+            # qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)  # for a circuit with momentum
+            qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
+
+
 ########################################################################################################################
 
 
@@ -365,6 +415,33 @@ def fully_parametric_qgnn(the_G, the_n_layers, the_params):
     qgnn_ansatz(the_G, the_n_layers, ansatz_params)
 
 
+"""
+FUNCTION THAT DEFINE THE GLOBAL QUANTUM CIRCUIT (WITH FULLY CONNECTED ANSATZ)
+"""
+
+
+def fully_connected_qgnn(the_G, the_n_layers, the_params):
+    """
+       :param: the_G: graph representing the Feynamn diagram
+       :param: the_n_layers: number of layers
+       :param: the_params: value of the parameters
+       :return: None
+       """
+
+    # get the number of vertices
+    the_n_wires = len(the_G.nodes)
+
+    # defining parameters for feature map(first three) and ansatz (the rest)
+    feat_params = the_params[:3]
+    ansatz_params = the_params[3:]
+
+    # the parametric feature map
+    parametric_qgnn_feature_map(the_G, feat_params)
+
+    # the ansatz
+    fully_connected_ansatz(the_G, the_n_layers, ansatz_params)
+
+
 ########################################################################################################################
 
 def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=True),
@@ -379,11 +456,10 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
     a = np.array(a.detach().numpy())
     b = np.array(b.detach().numpy())
 
-    # H = Sum(torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire), torch.abs(b)*qml.Projector(basis_state=[1], wires=the_wire))
-    # H = torch.abs(a)*qml.Projector(basis_state=[0], wires=the_wire)
+    H = a*qml.Projector(basis_state=[0], wires=the_wire) + b*qml.Projector(basis_state=[1], wires=the_wire)
 
-    mat = np.array([[np.abs(a, requires_grad=True), 0], [0, np.abs(b, requires_grad=True)]])
-    H = qml.Hermitian(mat, wires=[0])
+    # mat = np.array([[np.abs(a, requires_grad=True), 0], [0, np.abs(b, requires_grad=True)]])
+    # H = qml.Hermitian(mat, wires=[0])
     # obs = qml.Hamiltonian((1,), (H,))
 
     return H
@@ -414,6 +490,8 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
         qgnn(the_G, the_n_layers, the_circuit_params)
     elif the_choice == 'fully_parametrized':
         fully_parametric_qgnn(the_G, the_n_layers, the_circuit_params)
+    elif the_choice == 'fully_connected':
+        fully_connected_qgnn(the_G, the_n_layers, the_circuit_params)
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
@@ -421,6 +499,11 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     my_operator = qml.PauliZ(0)
     # my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
     output = qml.expval(my_operator)
+
+    # New way to define our customized observable
+    # probs = torch.tensor(qml.probs(wires=0), dtype=torch.float, requires_grad=True)
+    # output =probs[0]*torch.abs(the_observable_params[0]) + probs[1]*torch.abs(the_observable_params[1])
+
     # output.requires_grad = True
     return output
 
@@ -434,6 +517,7 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
 """
 Circuit that extract the squared total matrix element
 of Bhabha scattering (generalizable to other scattering processes)
+
 """
 dev2 = qml.device("default.qubit", wires=7)
 
@@ -482,7 +566,7 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     qml.Hadamard(wires=6)
 
     alpha = the_s_observable[0]*the_t_observable[0]
-    beta = the_s_observable[1]*the_s_observable[1]
+    beta = the_s_observable[1]*the_t_observable[1]
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     print(qml.expval(my_operator))
@@ -541,7 +625,7 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     qml.Hadamard(wires=6)
 
     alpha = the_s_observable[0] * the_t_observable[0]
-    beta = the_s_observable[1] * the_s_observable[1]
+    beta = the_s_observable[1] * the_t_observable[1]
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     return qml.expval(my_operator @ qml.PauliZ(wires=6))
