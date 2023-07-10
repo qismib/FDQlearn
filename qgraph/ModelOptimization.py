@@ -294,10 +294,10 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
             targets_e_e_t.append(pred)  # t-channel for Bhabha scattering
 
     # convert each element from torch tensor into numpy array for the plot
-    truth_e_mu_s = [(i[1]*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_mu_s]  # here I define a list of the true values
+    truth_e_mu_s = [i[1].detach().numpy() for i in targets_e_mu_s]  # here I define a list of the true values
     angles_e_mu_s = [i[0].graph['theta'] for i in targets_e_mu_s]  # here I build a list of scattering angles values
     targets_e_mu_s = predict(targets_e_mu_s, the_params, the_n_layers, the_choice)
-    targets_e_mu_s = [(i*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_mu_s]  # here I build a list of predicted outputs
+    targets_e_mu_s = [i.detach().numpy() for i in targets_e_mu_s]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.figure(1)
@@ -311,10 +311,10 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     np.savetxt('../data/training_test_results/test_outcomes_e_mu_s.txt', targets_e_mu_s)
 
     # convert each element from torch tensor into numpy array for the plot
-    truth_e_e_s = [(i[1]*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_s]  # here I define a list of the true values
+    truth_e_e_s = [i[1].detach().numpy() for i in targets_e_e_s]  # here I define a list of the true values
     angles_e_e_s = [i[0].graph['theta'] for i in targets_e_e_s]  # here I build a list of scattering angles values
     targets_e_e_s = predict(targets_e_e_s, the_params, the_n_layers, the_choice)
-    targets_e_e_s = [(i*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_s]  # here I build a list of predicted outputs
+    targets_e_e_s = [i.detach().numpy() for i in targets_e_e_s]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.figure(2)
@@ -328,11 +328,11 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     np.savetxt('../data/training_test_results/test_outcomes_e_e_s.txt', targets_e_e_s)
 
     # convert each element from torch tensor into numpy array for the plot
-    truth_e_e_t = [(i[1]*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_t]  # here I define a list of the true values
+    truth_e_e_t = [i[1].detach().numpy() for i in targets_e_e_t]  # here I define a list of the true values
     angles_e_e_t = [i[0].graph['theta'] for i in targets_e_e_t]  # here I build a list of scattering angles values
     targets_e_e_t = predict(targets_e_e_t, the_params, the_n_layers, the_choice)
 
-    targets_e_e_t = [(i*the_y[1] + the_y[0]).detach().numpy() for i in targets_e_e_t]  # here I build a list of predicted outputs
+    targets_e_e_t = [i.detach().numpy() for i in targets_e_e_t]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.figure(3)
