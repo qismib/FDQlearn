@@ -60,6 +60,7 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
             fin += 1
         else:  # here I count propagator-state nodes
             propagator += 1
+
     m = int((init + fin + (propagator - 1) / 2) * propagator)  # number of combinations I can connect nodes
     n = len(q_dataset.dataset[0][0].nodes)  # total number of nodes
     obs_params = 2
