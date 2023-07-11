@@ -308,6 +308,8 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     plt.legend(loc='lower right')
     plt.grid(True)
     plt.show()
+    np.savetxt('../data/training_test_results/test_truth_e_mu_s.txt', truth_e_mu_s)
+    np.savetxt('../data/training_test_results/angles_e_mu_s.txt', angles_e_mu_s)
     np.savetxt('../data/training_test_results/test_outcomes_e_mu_s.txt', targets_e_mu_s)
 
     # convert each element from torch tensor into numpy array for the plot
@@ -325,6 +327,8 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     plt.legend(loc='lower right')
     plt.grid(True)
     plt.show()
+    np.savetxt('../data/training_test_results/test_truth_e_e_s.txt', truth_e_e_s)
+    np.savetxt('../data/training_test_results/angles_e_e_s.txt', angles_e_e_s)
     np.savetxt('../data/training_test_results/test_outcomes_e_e_s.txt', targets_e_e_s)
 
     # convert each element from torch tensor into numpy array for the plot
@@ -343,6 +347,8 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     plt.legend(loc='upper right')
     plt.grid(True)
     plt.show()
+    np.savetxt('../data/training_test_results/test_truth_e_e_t.txt', truth_e_e_t)
+    np.savetxt('../data/training_test_results/angles_e_e_t.txt', angles_e_e_t)
     np.savetxt('../data/training_test_results/test_outcomes_e_e_t.txt', targets_e_e_t)
 
 
