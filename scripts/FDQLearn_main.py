@@ -53,7 +53,6 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
         init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
-
     print(init_params)
 
     final_params = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,

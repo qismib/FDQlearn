@@ -447,14 +447,12 @@ def fully_connected_qgnn(the_G, the_n_layers, the_params):
 def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=True),
                     b=torch.tensor(1., dtype=torch.float, requires_grad=True)):
     """
-        :param: the_wire: qubit on which the operator acts
-        :param: a, b: positive real coefficient
-        :return: an operator which is diagonal, hermitian and positive definite
+    :param: the_wire: qubit on which the operator acts
+    :param: a, b: positive real coefficient
+    :return: an operator which is diagonal, hermitian and positive definite
     """
 
     assert a != b, "a and b must be different"
-    a = np.array(a.detach().numpy())
-    b = np.array(b.detach().numpy())
 
     H = a*qml.Projector(basis_state=[0], wires=the_wire) + b*qml.Projector(basis_state=[1], wires=the_wire)
 
@@ -470,7 +468,7 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
 dev1 = qml.device("default.qubit", wires=6)
 
 
-@qml.qnode(dev1, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev1, interface='torch', diff_method="adjoint")
 def expect_value(the_G, the_n_layers, the_params, the_choice):
     """
     :param: the_G: graph representing the Feynamn diagram
@@ -522,7 +520,7 @@ of Bhabha scattering (generalizable to other scattering processes)
 dev2 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev2, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev2, interface='torch', diff_method="adjoint")
 def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """
@@ -581,7 +579,7 @@ scattering processes)
 dev3 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev3, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev3, interface='torch', diff_method="adjoint")
 def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """
