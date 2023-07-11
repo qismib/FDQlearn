@@ -15,7 +15,16 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :return: list of predictions
     """
-    return [expect_value(element[0], the_n_layers, the_weights, the_choice) for element in the_dataset]
+    predictions = []
+    the_circuit_weights = the_weights[:-2]
+    the_observable_weights = the_weights[-2:]
+    for element in the_dataset:
+        probability = torch.tensor(expect_value(element[0], the_n_layers, the_circuit_weights, the_choice), dtype=torch.float)
+        output = probability[0][0]*the_observable_weights[0] + probability[0][1]*the_observable_weights[1]
+        predictions.append(output)
+
+    return predictions
+    # return [expect_value(element[0], the_n_layers, the_weights, the_choice) for element in the_dataset]
 
 
 def get_mse(predictions, ground_truth):
@@ -92,7 +101,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
             break
 
         if epoch % 5 == 0:
-            res = [epoch, training_loss, the_val[0], elapsed]
+            res = [epoch, training_loss, the_val, elapsed]
             print("Epoch: {:2d} | Training loss: {:3f} | Validation loss: {:3f} | Elapsed Time per Epoch: {:3f}".format(*res))
 
     # saving the loss value for each epoch

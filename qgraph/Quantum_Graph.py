@@ -453,11 +453,13 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
     """
 
     assert a != b, "a and b must be different"
+    a = a.detach().numpy()
+    b = b.detach().numpy()
 
-    H = a*qml.Projector(basis_state=[0], wires=the_wire) + b*qml.Projector(basis_state=[1], wires=the_wire)
+    # H = a*qml.Projector(basis_state=[0], wires=the_wire) + b*qml.Projector(basis_state=[1], wires=the_wire)
 
-    # mat = np.array([[np.abs(a, requires_grad=True), 0], [0, np.abs(b, requires_grad=True)]])
-    # H = qml.Hermitian(mat, wires=[0])
+    mat = np.array([[np.abs(a, requires_grad=True), 0], [0, np.abs(b, requires_grad=True)]])
+    H = qml.Hermitian(mat, wires=the_wire)
     # obs = qml.Hamiltonian((1,), (H,))
 
     return H
@@ -468,7 +470,7 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
 dev1 = qml.device("default.qubit", wires=6)
 
 
-@qml.qnode(dev1, interface='torch', diff_method="adjoint")
+@qml.qnode(dev1, interface='torch', diff_method="parameter-shift")
 def expect_value(the_G, the_n_layers, the_params, the_choice):
     """
     :param: the_G: graph representing the Feynamn diagram
@@ -478,9 +480,9 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     :return: expectation value of a diagonal, positive hermitian operator on the first qubit
     """
 
-    # the_circuit_params = the_params  # when I use PauliZ as observable
-    the_circuit_params = the_params[:-2]
-    the_observable_params = the_params[-2:]
+    the_circuit_params = the_params  # when I use PauliZ as observable
+    # the_circuit_params = the_params[:-2]
+    # the_observable_params = the_params[-2:]
 
     if the_choice == 'parametrized':
         parametric_qgnn(the_G, the_n_layers, the_circuit_params)
@@ -494,13 +496,12 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
         return 0
 
-    my_operator = qml.PauliZ(0)
+    # my_operator = qml.PauliZ(0)
     # my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
-    output = qml.expval(my_operator)
+    # output = qml.expval(my_operator)
 
     # New way to define our customized observable
-    # probs = torch.tensor(qml.probs(wires=0), dtype=torch.float, requires_grad=True)
-    # output =probs[0]*torch.abs(the_observable_params[0]) + probs[1]*torch.abs(the_observable_params[1])
+    output = qml.probs(wires=[0])
 
     # output.requires_grad = True
     return output
