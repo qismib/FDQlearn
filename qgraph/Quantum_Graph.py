@@ -292,7 +292,7 @@ FULLY CONNECTED ANSATZ CIRCUIT FOR THE QGNN
 
 def fully_connected_ansatz(the_G, the_n_layers, the_params):
     """
-    Trainable ansatz having l * (n*(n-1)/2 +n + 1 (2)) parameters, where n is the number of vertices,
+    Trainable fully connected ansatz having l * (n*(n-1)/2 +n + 1 (2)) parameters, where n is the number of vertices,
     # l is the number of layers and +1 (+2) for theta (and p) parameters
     :param: the_G: graph representing a feynman diagram
     :param: the_n_layers: number of layers (depth of the circuit)
@@ -301,7 +301,7 @@ def fully_connected_ansatz(the_G, the_n_layers, the_params):
 
     # number of edges of the graph
     the_n = len(the_G.nodes)
-    permutations = the_n * (the_n - 1) / 2
+    permutations = the_n * (the_n - 1) // 2
 
     # number of parameters with the momentum p
     # assert len(the_params) == the_n_layers * (permutations + the_n + 2), "Number of parameters is wrong"
