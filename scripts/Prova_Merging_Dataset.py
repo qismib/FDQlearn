@@ -80,6 +80,8 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
         init_params = 0.01 * torch.randn(n_layers * (n*(n-1)//2 + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
+    else:
+        print('choice can be either unparametrized, parametrized, fully_parametrized or fully_connected')
 
     final_params = merged_train_qgnn(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch,
                                      the_train_file, the_val_file, n_layers, choice)
