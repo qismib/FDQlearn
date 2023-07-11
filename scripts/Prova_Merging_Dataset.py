@@ -66,7 +66,6 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     obs_params = 2
 
     if choice == 'unparametrized':
-        l=0
         init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
     elif choice == 'parametrized':
@@ -79,6 +78,7 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
         init_params.requires_grad = True
     elif choice == 'fully_connected':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
+        print(n*(n-1)/2 + n + 1)
         init_params = 0.01 * torch.randn(n_layers * (n*(n-1)/2 + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
         init_params.requires_grad = True
 
