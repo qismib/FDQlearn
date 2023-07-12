@@ -503,7 +503,6 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     # New way to define our customized observable
     output = qml.probs(wires=[0])
 
-    # output.requires_grad = True
     return output
 
 

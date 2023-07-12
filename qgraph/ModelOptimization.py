@@ -18,14 +18,16 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
     predictions = []
     the_circuit_weights = the_weights[:-2]
     the_observable_weights = the_weights[-2:]
+
+    # return [expect_value(element[0], the_n_layers, the_circuit_weights, the_choice) for element in the_dataset]
+
     for element in the_dataset:
         probability = torch.tensor(expect_value(element[0], the_n_layers, the_circuit_weights, the_choice), dtype=torch.float)
         probability.requires_grad = True
-        output = probability[0][0]*the_observable_weights[0] + probability[0][1]*the_observable_weights[1]
+        output = probability[0][0] - probability[0][1]
         predictions.append(output)
 
     return predictions
-    # return [expect_value(element[0], the_n_layers, the_weights, the_choice) for element in the_dataset]
 
 
 def get_mse(predictions, ground_truth):
@@ -99,6 +101,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
 
         if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-5:
             the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
+            print('the training process stopped at epoch number ', epoch)
             break
 
         if epoch % 5 == 0:
@@ -172,10 +175,11 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
 
         if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-5:
             the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
+            print('the training process stopped at epoch number:', epoch)
             break
 
         if epoch % 5 == 0:
-            res = [epoch, training_loss, the_s_val, the_t_val, elapsed]
+            res = [epoch, training_loss, the_s_val[0], the_t_val[0], elapsed]
             print("Epoch: {:2d} | Training loss: {:3f} | s-channel loss: {:3f} | t-channel loss: {:3f} | "
                   "Elapsed Time per Epoch: {:3f}".format(*res))
 
@@ -227,7 +231,8 @@ def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'param
 
     the_validation_loss = get_mse(the_validation_predictions, the_validation_truth)
 
-    return the_validation_loss.detach().numpy()
+    the_validation_loss = the_validation_loss.detach().numpy()
+    return the_validation_loss
 
 
 """
