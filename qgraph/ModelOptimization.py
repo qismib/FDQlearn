@@ -175,7 +175,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
             break
 
         if epoch % 5 == 0:
-            res = [epoch, training_loss, the_s_val[0], the_t_val[0], elapsed]
+            res = [epoch, training_loss, the_s_val, the_t_val, elapsed]
             print("Epoch: {:2d} | Training loss: {:3f} | s-channel loss: {:3f} | t-channel loss: {:3f} | "
                   "Elapsed Time per Epoch: {:3f}".format(*res))
 
