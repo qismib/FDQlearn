@@ -470,7 +470,7 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
 dev1 = qml.device("default.qubit", wires=6)
 
 
-@qml.qnode(dev1, interface='torch', diff_method="parameter-shift")
+@qml.qnode(dev1, interface='torch', diff_method="backprop")
 def expect_value(the_G, the_n_layers, the_params, the_choice):
     """
     :param: the_G: graph representing the Feynamn diagram
