@@ -79,13 +79,13 @@ num_layers = 3
 num_epoch = 30
 batch = 20
 elements = 500
-csv_file = '../data/dataset/QED_data_e_annih_e_s.csv'
-train_file = '../data/training_test_results/parametrized_s_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_s_channel_val_loss.txt'
-test_pred_file = '../data/training_test_results/parametrized_s_channel_predictions.txt'
-truth_file = '../data/training_test_results/parametrized_s_channel_ground_truth.txt'
-final_params_file = '../data/interference/parametrized_channel_s_final_params.txt'
-standardization_file = '../data/interference/parametrized_channel_s_standardization.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_t.csv'
+train_file = '../data/training_test_results/parametrized_t_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_t_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_t_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_t_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_t_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_t_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training

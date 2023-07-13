@@ -22,9 +22,9 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
     # return [expect_value(element[0], the_n_layers, the_circuit_weights, the_choice) for element in the_dataset]
 
     for element in the_dataset:
-        probability = torch.tensor(expect_value(element[0], the_n_layers, the_circuit_weights, the_choice), dtype=torch.float)
-        probability.requires_grad = True
-        output = probability[0][0] - probability[0][1]
+        probability = expect_value(element[0], the_n_layers, the_circuit_weights, the_choice)
+        # probability.requires_grad = True
+        output = the_observable_weights[0]*probability[0][0] - the_observable_weights[1]*probability[0][1]
         predictions.append(output)
 
     return predictions
