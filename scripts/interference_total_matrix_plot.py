@@ -1,9 +1,5 @@
 import matplotlib.pyplot as plt
 from pennylane import numpy as np
-import torch
-from qgraph import FeynmanDiagramDataset
-from qgraph import interference, matrix_squared
-from torch_geometric.loader import DataLoader
 
 
 def function(theta):
@@ -22,15 +18,15 @@ angles_1 = np.loadtxt('../data/interference/interference_angles.txt')
 x = np.linspace(0.5, np.pi, 1000)
 y = function(x)
 
-plt.plot(angles_1, interf, 'ro')
-plt.plot(x, y)
+plt.plot(angles_1, interf, 'ro', label='circuit prediction')
+plt.plot(x, y, label='theoretical result')
 plt.show()
 
-m_squared = np.loadtxt('../data/interference/total_matrix_outcomes.txt')
-angles_2 = np.loadtxt('../data/interference/total_matrix_angles.txt')
+# m_squared = np.loadtxt('../data/interference/total_matrix_outcomes.txt')
+# angles_2 = np.loadtxt('../data/interference/total_matrix_angles.txt')
 
-z = bhabha(x)
+# z = bhabha(x)
 
-plt.plot(angles_2, m_squared)
-plt.plot(x, z)
-plt.show()
+# plt.plot(angles_2, m_squared)
+# plt.plot(x, z)
+# plt.show()

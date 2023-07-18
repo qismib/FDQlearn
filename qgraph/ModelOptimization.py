@@ -23,8 +23,7 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
 
     for element in the_dataset:
         probability = expect_value(element[0], the_n_layers, the_circuit_weights, the_choice)
-        # probability.requires_grad = True
-        output = the_observable_weights[0]*probability[0][0] - the_observable_weights[1]*probability[0][1]
+        output = torch.abs(the_observable_weights[0])*probability[0][0] + torch.abs(the_observable_weights[1])*probability[0][1]
         predictions.append(output)
 
     return predictions
@@ -111,6 +110,14 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     # saving the loss value for each epoch
     np.savetxt(the_train_file, epoch_loss)
     np.savetxt(the_val_file, validation_loss)
+
+    # plotting the loss value for each epoch
+    plt.plot(range(the_n_epochs), epoch_loss, label='training')
+    plt.plot(range(the_n_epochs), validation_loss, label='validation')
+    plt.xlabel('Number of Epochs')
+    plt.ylabel('Loss per Epoch')
+    plt.legend(loc="upper right")
+    plt.show()
 
     return the_weights
 
@@ -273,7 +280,7 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     plt.plot(angles, truth, 'bs', label='ground truth')
     plt.xlabel('Scattering Angle (rad)')
     plt.ylabel('Squared Matrix Element')
-    plt.legend(loc='lower right')
+    plt.legend(loc='upper right')
     plt.grid(True)
     plt.show()
     np.savetxt(the_truth_file, truth)

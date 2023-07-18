@@ -1,6 +1,6 @@
-import pennylane as qml
-import torch
 from pennylane import numpy as np
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 import matplotlib.pyplot as plt
 

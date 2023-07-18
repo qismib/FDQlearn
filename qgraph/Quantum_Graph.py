@@ -579,7 +579,7 @@ scattering processes)
 dev3 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev3, interface='torch', diff_method="adjoint")
+@qml.qnode(dev3, interface='torch')
 def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
                          the_choice: str = 'parametrized'):
     """
@@ -593,9 +593,9 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     :return: expectation value of a composite operator that is the prediction of the interference
     """
 
-    the_s_observable = the_s_params[-2:]
+    the_s_observable = torch.abs(the_s_params[-2:])
     the_s_params = the_s_params[:-2]
-    the_t_observable = the_t_params[-2:]
+    the_t_observable = torch.abs(the_t_params[-2:])
     the_t_params = the_t_params[:-2]
 
     qml.Hadamard(wires=6)

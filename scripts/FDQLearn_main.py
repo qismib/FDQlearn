@@ -1,6 +1,6 @@
 from pennylane import numpy as np
 import torch
-from qgraph import FeynmanDiagramDataset, standardization
+from qgraph import FeynmanDiagramDataset, min_max
 from qgraph import train_qgnn, test_prediction
 from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
@@ -15,7 +15,7 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
     # Splitting q_dataset into training and validation set
     training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
-    y_stat, p_stat = standardization(training_set, validation_set, the_bandwidth)
+    y_stat, p_stat = min_max(training_set, validation_set)
 
     # Building DataLoaders for each set
     training_loader = DataLoader(training_set, batch_size=batch_size)
@@ -76,16 +76,16 @@ np.random.seed(12345)
 
 
 num_layers = 3
-num_epoch = 30
+num_epoch = 50
 batch = 20
 elements = 500
-csv_file = '../data/dataset/QED_data_e_annih_e_t.csv'
-train_file = '../data/training_test_results/parametrized_t_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_t_channel_val_loss.txt'
-test_pred_file = '../data/training_test_results/parametrized_t_channel_predictions.txt'
-truth_file = '../data/training_test_results/parametrized_t_channel_ground_truth.txt'
-final_params_file = '../data/interference/parametrized_channel_t_final_params.txt'
-standardization_file = '../data/interference/parametrized_channel_t_standardization.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_s.csv'
+train_file = '../data/training_test_results/parametrized_s_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_s_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_s_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_s_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_s_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_s_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
