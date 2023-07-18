@@ -20,6 +20,7 @@ y = function(x)
 
 plt.plot(angles_1, interf, 'ro', label='circuit prediction')
 plt.plot(x, y, label='theoretical result')
+plt.legend(loc='upper right')
 plt.show()
 
 # m_squared = np.loadtxt('../data/interference/total_matrix_outcomes.txt')
