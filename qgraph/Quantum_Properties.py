@@ -1,6 +1,7 @@
 from pennylane import numpy as np
 from torch_geometric.utils import to_networkx
-from qgraph import total_matrix_circuit, interference_circuit
+import matplotlib.pyplot as plt
+from qgraph import total_matrix_circuit, interference_circuit, predict
 
 
 def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, the_choice: str = 'parametrized'):
@@ -19,6 +20,10 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
 
     output = []
     angles = []
+    s_truth = []
+    t_truth = []
+    s_set = []
+    t_set = []
 
     for s, t in zip(the_s_loader, the_t_loader):
         # converting for each batch any DataLoader item into a list of tuples of networkx graph
@@ -27,12 +32,32 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
                                  edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), s[1][0])
         t_element = (to_networkx(data=t[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
                                  edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), t[1][0])
+        s_set.append(s_element)
+        t_set.append(t_element)
 
         assert s_element[0].graph['theta'] == t_element[0].graph['theta'] and \
                s_element[0].graph['p_norm'] == t_element[0].graph['p_norm'], "the angles and the momenta must be the same"
 
         angles.append(s_element[0].graph['theta'])
-        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params, the_n_layers, the_choice).detach().numpy())
+        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params,
+                                           the_n_layers, the_choice).detach().numpy())
+        s_truth.append(s_element[1])
+        t_truth.append(t_element[1])
+
+    s_pred = predict(s_set, s_params, the_n_layers, the_choice)
+    s_pred = [s.detach().numpy() for s in s_pred]
+    t_pred = predict(t_set, t_params, the_n_layers, the_choice)
+    t_pred = [t.detach().numpy() for t in t_pred]
+
+    plt.plot(angles, s_truth, 'ro', label='s channel truth')
+    plt.plot(angles, s_pred, 'bs', label='s channel pred')
+    plt.legend(loc='upper right')
+    plt.show()
+
+    plt.plot(angles, t_truth, 'ro', label='t channel truth')
+    plt.plot(angles, t_pred, 'bs', label='t channel pred')
+    plt.legend(loc='upper right')
+    plt.show()
 
     return output, angles
 

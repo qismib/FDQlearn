@@ -480,9 +480,7 @@ def expect_value(the_G, the_n_layers, the_params, the_choice):
     :return: expectation value of a diagonal, positive hermitian operator on the first qubit
     """
 
-    the_circuit_params = the_params  # when I use PauliZ as observable
-    # the_circuit_params = the_params[:-2]
-    # the_observable_params = the_params[-2:]
+    the_circuit_params = the_params
 
     if the_choice == 'parametrized':
         parametric_qgnn(the_G, the_n_layers, the_circuit_params)
@@ -563,8 +561,8 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
 
     qml.Hadamard(wires=6)
 
-    alpha = the_s_observable[0]*the_t_observable[0]
-    beta = the_s_observable[1]*the_t_observable[1]
+    alpha = torch.abs(the_s_observable[0]*the_t_observable[0])
+    beta = torch.abs(the_s_observable[1]*the_t_observable[1])
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     print(qml.expval(my_operator))
@@ -593,9 +591,9 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     :return: expectation value of a composite operator that is the prediction of the interference
     """
 
-    the_s_observable = torch.abs(the_s_params[-2:])
+    the_s_observable = the_s_params[-2:]
     the_s_params = the_s_params[:-2]
-    the_t_observable = torch.abs(the_t_params[-2:])
+    the_t_observable = the_t_params[-2:]
     the_t_params = the_t_params[:-2]
 
     qml.Hadamard(wires=6)
@@ -622,8 +620,8 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
 
     qml.Hadamard(wires=6)
 
-    alpha = the_s_observable[0] * the_t_observable[0]
-    beta = the_s_observable[1] * the_t_observable[1]
+    alpha = torch.abs(the_s_observable[0] * the_t_observable[0])
+    beta = torch.abs(the_s_observable[1] * the_t_observable[1])
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     return qml.expval(my_operator @ qml.PauliZ(wires=6))

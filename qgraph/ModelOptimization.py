@@ -19,8 +19,6 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
     the_circuit_weights = the_weights[:-2]
     the_observable_weights = the_weights[-2:]
 
-    # return [expect_value(element[0], the_n_layers, the_circuit_weights, the_choice) for element in the_dataset]
-
     for element in the_dataset:
         probability = expect_value(element[0], the_n_layers, the_circuit_weights, the_choice)
         output = torch.abs(the_observable_weights[0])*probability[0][0] + torch.abs(the_observable_weights[1])*probability[0][1]
@@ -37,7 +35,7 @@ def get_mse(predictions, ground_truth):
     """
     n = len(predictions)
     assert len(ground_truth) == n, "The number of predictions and true labels is not equal"
-    return sum([(predictions[i] - torch.tensor(ground_truth[i], dtype=torch.float)) ** 2 for i in range(n)])
+    return sum([(predictions[i] - torch.tensor(ground_truth[i], dtype=torch.float))**2 for i in range(n)])
 
 
 """
@@ -98,7 +96,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
         the_val = validation_qgnn(the_validation_loader, the_weights, the_choice, the_n_layers)
         validation_loss.append(the_val)
 
-        if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-5:
+        if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
             the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
             print('the training process stopped at epoch number ', epoch)
             break

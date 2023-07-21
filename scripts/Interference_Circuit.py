@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 import torch
 from qgraph import FeynmanDiagramDataset
-from qgraph import interference, min_max_scaling
+from qgraph import interference, standard_scaling
 from torch_geometric.loader import DataLoader
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -22,16 +22,16 @@ s_params = torch.tensor(s_array, dtype=torch.float)
 t_array = np.loadtxt('../data/interference/parametrized_channel_t_final_params.txt')
 t_params = torch.tensor(t_array, dtype=torch.float)
 
-torch.manual_seed(12345)
-np.random.seed(12345)
+torch.manual_seed(68459)
+np.random.seed(68459)
 s_stat = torch.from_numpy(np.loadtxt('../data/interference/parametrized_channel_s_standardization.txt'))
 s_channel = FeynmanDiagramDataset(the_file_path=file1)
-min_max_scaling(s_channel, s_stat[0], s_stat[1], s_stat[2], s_stat[3])
-torch.manual_seed(12345)
-np.random.seed(12345)
+# standard_scaling(s_channel, s_stat[0], s_stat[1], s_stat[2], s_stat[3], s_stat[4])
+torch.manual_seed(68459)
+np.random.seed(68459)
 t_stat = torch.from_numpy(np.loadtxt('../data/interference/parametrized_channel_t_standardization.txt'))
 t_channel = FeynmanDiagramDataset(the_file_path=file2)
-min_max_scaling(t_channel, t_stat[0], t_stat[1], t_stat[2], t_stat[3])
+# standard_scaling(t_channel, t_stat[0], t_stat[1], t_stat[2], t_stat[3], t_stat[4])
 
 s_channel = DataLoader(s_channel, batch_size=1)
 t_channel = DataLoader(t_channel, batch_size=1)
