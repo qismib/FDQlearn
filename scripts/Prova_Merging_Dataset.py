@@ -36,7 +36,7 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     for i in validation_set:
         if i[0]['scattering'] == 'e_e_s':
             validation_s_set.append(i)
-        if i[0]['scattering'] == 'e_e_t':
+        elif i[0]['scattering'] == 'e_e_t':
             validation_t_set.append(i)
 
     # Building DataLoaders for each set
