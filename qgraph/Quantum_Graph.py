@@ -91,6 +91,11 @@ def parametric_ZZ_layer(the_G, the_params):
         qml.IsingZZ(torch.inner(the_feat, the_params), wires=the_edge)
 
 
+"""
+PARAMETRIC ZZ LAYER WHERE I USE DIFFERENT SET OF TRAINABLE PARAMETERS FOR EACH TYPE OF PARTICLE OF THE INTERACTION
+"""
+
+
 def fully_parametric_ZZ_layer(the_G, the_params):
     """
     :param: the_G: graph representing the Feynamn diagram
@@ -201,6 +206,10 @@ def parametric_qgnn_feature_map(the_G, the_params):
     Kinetic_layer(the_G)
 
     qml.Barrier()
+
+"""
+PARAMETRIC FEATURE MAP WHERE I USE THE FULLY_PARAMETRIC_ZZ_LAYER FUNCTION
+"""
 
 
 def fully_parametric_qgnn_feature_map(the_G, the_params):
