@@ -207,6 +207,7 @@ def parametric_qgnn_feature_map(the_G, the_params):
 
     qml.Barrier()
 
+
 """
 PARAMETRIC FEATURE MAP WHERE I USE THE FULLY_PARAMETRIC_ZZ_LAYER FUNCTION
 """
