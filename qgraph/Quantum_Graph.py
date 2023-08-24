@@ -26,6 +26,38 @@ def RX_layer(the_G):
 
 
 """
+NODE ENCODING LAYER WITH CONTROL OPERATORS, WHICH GIVE MORE IDEA OF THE TIME FLOW OVER THE DIAGRAM
+"""
+
+
+def Node_encoding(the_G):
+    """
+       :param: the_G: graph representing the Feynamn diagram
+       :return: None
+    """
+
+    init_node = []
+    prop_node = []
+    final_node = []
+
+    encoding_angles = np.array([np.pi/2, np.pi])
+
+    for node in the_G.nodes:
+        if the_G.nodes[node]['state'][0] == 1:  # if the state is the initial state
+            init_node.append(node)
+        elif the_G.nodes[node]['state'][2] == 1:  # if the state is the final state
+            final_node.append(node)
+        else:  # if the state is the propagator state
+            prop_node.append(node)
+
+    for i in prop_node:
+        qml.ctrl(qml.RX, control=init_node)(encoding_angles[0], wires=i)
+
+    for j in final_node:
+        qml.ctrl(qml.RX, control=prop_node)(encoding_angles[1], wires=j)
+
+
+"""
 LAYER THAT ENCODE THE EDGE FEATURES, I USE A ZZ GATE TO CREATE ENTANGLEMENT INTO THE CIRCUIT ANDO MOREOVER TO 
 ENCODE IN A SORT OF WAY THE TOPOLOGY OF THE INPUT DIAGRAM (CLASSICALLY ENCODED AS A GRAPH)
 """
@@ -125,6 +157,7 @@ def qgnn_feature_map(the_G):
 
         # encode node's features
         RX_layer(the_G)
+        # Node_encoding(the_G)
 
         qml.Barrier()
     # encode angle and momentum features
@@ -160,6 +193,7 @@ def parametric_qgnn_feature_map(the_G, the_params):
 
     # encode node's features
     RX_layer(the_G)
+    # Node_encoding(the_G)
 
     qml.Barrier()
 
@@ -190,6 +224,7 @@ def fully_parametric_qgnn_feature_map(the_G, the_params):
 
     # encode node's features
     RX_layer(the_G)
+    # Node_encoding(the_G)
 
     qml.Barrier()
 
