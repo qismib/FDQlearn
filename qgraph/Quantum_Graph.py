@@ -669,4 +669,12 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     beta = torch.abs(the_s_observable[1] * the_t_observable[1])
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
+    #phases = qml.state()
+
+    #print(phases)
+
+    #for i in range(len(phases)):
+        #phases[i] = phases[i]/np.abs(phases[i])
+        #print(phases)
+
     return qml.expval(my_operator @ qml.PauliZ(wires=6))
