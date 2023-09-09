@@ -75,8 +75,8 @@ torch.manual_seed(12345)
 np.random.seed(12345)
 
 
-num_layers = 3
-num_epoch = 50
+num_layers = 5
+num_epoch = 100
 batch = 20
 elements = 500
 csv_file = '../data/dataset/QED_data_e_annih_e_t.csv'

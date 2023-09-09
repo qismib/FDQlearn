@@ -1,8 +1,7 @@
 from pennylane import numpy as np
+import matplotlib.pyplot as plt
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-
-import matplotlib.pyplot as plt
 
 angles_e_e_s = np.loadtxt('../data/training_test_results/angles_e_e_s.txt')
 angles_e_e_t = np.loadtxt('../data/training_test_results/angles_e_e_t.txt')

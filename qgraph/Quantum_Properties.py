@@ -1,20 +1,23 @@
 from pennylane import numpy as np
+import torch
 from torch_geometric.utils import to_networkx
 import matplotlib.pyplot as plt
-from qgraph import total_matrix_circuit, interference_circuit, predict
+from qgraph import total_matrix_circuit, interference_circuit, predict, phase_estimation
 
 
 def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, the_choice: str = 'parametrized'):
     """
     function that computes the interference term for all the datas
     :param: the_s_loader: set of graphs representing all the s-channel diagrams
-    :param: the_s_params: value of the final parameters for s-channel (after training)
-    :param: the_t_channel: set of graphs representing all the t-channel diagrams
-    :param: the_t_params: value of the final parameters for channel t (after training)
+    :param: s_params: value of the final parameters for s-channel (after training)
+    :param: the_t_loader: set of graphs representing all the t-channel diagrams
+    :param: t_params: value of the final parameters for channel t (after training)
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
     :return: output: set of all the interference terms for all the points
     :return: angles: set of all the angles values of the dataset
+    :return: s_glob_phase: set of all the global phases for the s-channel
+    :return: t_glob_phase: set of all the global phases for t-channel
     """
     assert len(the_s_loader) == len(the_t_loader), "the length of the Dataloaders must be the same"
 
@@ -24,6 +27,8 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
     t_truth = []
     s_set = []
     t_set = []
+    s_glob_phase = []
+    t_glob_phase = []
 
     for s, t in zip(the_s_loader, the_t_loader):
         # converting for each batch any DataLoader item into a list of tuples of networkx graph
@@ -38,15 +43,21 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
         assert s_element[0].graph['theta'] == t_element[0].graph['theta'] and \
                s_element[0].graph['p_norm'] == t_element[0].graph['p_norm'], "the angles and the momenta must be the same"
 
+        s_phase = global_phase(s_element, s_params, the_n_layers[0], the_choice)
+        t_phase = global_phase(t_element, t_params, the_n_layers[1], the_choice)
+
+        s_glob_phase.append(s_phase)
+        t_glob_phase.append(t_phase)
+
         angles.append(s_element[0].graph['theta'])
-        output.append(interference_circuit(s_element[0], s_params, t_element[0], t_params,
-                                           the_n_layers, the_choice).detach().numpy())
+        output.append(2*interference_circuit(s_element[0], s_params, s_phase, t_element[0], t_params, t_phase,
+                                             the_n_layers, the_choice).detach().numpy())
         s_truth.append(s_element[1])
         t_truth.append(t_element[1])
 
-    s_pred = predict(s_set, s_params, the_n_layers, the_choice)
+    s_pred = predict(s_set, s_params, the_n_layers[0], the_choice)
     s_pred = [s.detach().numpy() for s in s_pred]
-    t_pred = predict(t_set, t_params, the_n_layers, the_choice)
+    t_pred = predict(t_set, t_params, the_n_layers[1], the_choice)
     t_pred = [t.detach().numpy() for t in t_pred]
 
     plt.plot(angles, s_truth, 'ro', label='s channel truth')
@@ -59,16 +70,16 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
     plt.legend(loc='upper right')
     plt.show()
 
-    return output, angles
+    return output, angles, s_glob_phase, t_glob_phase
 
 
 def matrix_squared(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, the_choice: str = 'parametrized'):
     """
     function that computes the total matrix element for all the datas
     :param: the_s_loader: set of graphs representing all the s-channel diagrams
-    :param: the_s_params: value of the final parameters for s-channel (after training)
-    :param: the_t_channel: set of graphs representing all the t-channel diagrams
-    :param: the_t_params: value of the final parameters for channel t (after training)
+    :param: s_params: value of the final parameters for s-channel (after training)
+    :param: the_t_loader: set of graphs representing all the t-channel diagrams
+    :param: t_params: value of the final parameters for channel t (after training)
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
     :return: output: set of all the interference terms for all the points
@@ -79,6 +90,7 @@ def matrix_squared(the_s_loader, s_params, the_t_loader, t_params, the_n_layers,
 
     output = []
     angles = []
+
     for s, t in zip(the_s_loader, the_t_loader):
         # converting for each batch any DataLoader item into a list of tuples of networkx graph
         # object and the corresponding output
@@ -93,3 +105,25 @@ def matrix_squared(the_s_loader, s_params, the_t_loader, t_params, the_n_layers,
         output.append(total_matrix_circuit(s_element[0], s_params, t_element[0], t_params, the_n_layers, the_choice))
 
     return output, angles
+
+
+def global_phase(the_element, the_final_params, the_n_layers, the_choice: str = 'parametrized'):
+    """
+    function that computes the global phase for all the datas
+    :param: the_element: graph representing a Feynman diagram
+    :param: the_final_params: value of the final parameters (after training)
+    :param: the_n_layers: number of layers
+    :param: the_choice: string that tells which feature map we want to use
+    :return: glob_phase: global state of the state
+    """
+
+    state = phase_estimation(the_element[0], the_final_params, the_n_layers, the_choice)
+
+    state = torch.angle(state[0])
+
+    if torch.min(torch.abs(state)) == 0:
+        glob_phase = 0
+    else:
+        glob_phase = torch.max(state).numpy()
+
+    return glob_phase

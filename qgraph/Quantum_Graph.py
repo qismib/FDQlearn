@@ -489,6 +489,12 @@ def fully_connected_qgnn(the_G, the_n_layers, the_params):
 
 ########################################################################################################################
 
+
+"""
+FUNCTION THAT DEFINE THE OBSERVABLE WE USE TO MAKE THE MEASURE FOR THE INTERFERENCE CIRCUIT
+"""
+
+
 def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=True),
                     b=torch.tensor(1., dtype=torch.float, requires_grad=True)):
     """
@@ -508,6 +514,25 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
     # obs = qml.Hamiltonian((1,), (H,))
 
     return H
+
+########################################################################################################################
+
+
+"""
+FUNCTION USED TO CANCEL THE GLOBAL PHASE OF THE STATE
+"""
+
+
+def global_phase_operator(the_angle, the_wire: int = 0):
+    """
+    :param: the_angle: angle rotate the state with
+    :param: the_wire: qubit on which the operator acts
+    :return: None
+    """
+    qml.PhaseShift(the_angle, wires=the_wire)
+    qml.PauliX(wires=0)
+    qml.PhaseShift(the_angle, wires=the_wire)
+    qml.PauliX(wires=0)
 
 ########################################################################################################################
 
@@ -564,14 +589,16 @@ dev2 = qml.device("default.qubit", wires=7)
 
 
 @qml.qnode(dev2, interface='torch', diff_method="adjoint")
-def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
-                         the_choice: str = 'parametrized'):
+def total_matrix_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel, the_t_params, the_t_phase,
+                         the_layers, the_choice: str = 'parametrized'):
     """
     Circuit that extract the squared total matrix element of 2 Feynman Diagrams
     :param: the_s_channel: graph representing the s-channel diagram
     :param: the_s_params: value of the final parameters for s-channel (after training)
+    :param: the_s_phase: global phase of the s-channel
     :param: the_t_channel: graph representing the t-channel diagram
     :param: the_t_params: value of the final parameters for channel t (after training)
+    :param: the_t_phase: global phase of the t-channel
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
     :return: expectation value of a composite operator that is the prediction of the matrix element squared
@@ -587,18 +614,24 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     if the_choice == 'parametrized':
 
         qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
         qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'unparametrized':
         qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
         qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'fully_parametrized':
         qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
         qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
@@ -623,14 +656,16 @@ dev3 = qml.device("default.qubit", wires=7)
 
 
 @qml.qnode(dev3, interface='torch')
-def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_params, the_layers,
-                         the_choice: str = 'parametrized'):
+def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel, the_t_params, the_t_phase,
+                         the_layers, the_choice: str = 'parametrized'):
     """
     Circuit that extract the interference term of 2 Feynman Diagrams
     :param: the_s_channel: graph representing the s-channel diagram
     :param: the_s_params: value of the final parameters for s-channel (after training)
+    :param: the_s_phase: global phase of the s-channel
     :param: the_t_channel: graph representing the t-channel diagram
     :param: the_t_params: value of the final parameters for channel t (after training)
+    :param: the_t_phase: global phase of the t-channel
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
     :return: expectation value of a composite operator that is the prediction of the interference
@@ -645,19 +680,25 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
 
     if the_choice == 'parametrized':
 
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params)
+        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params)
+        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'unparametrized':
-        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params)
+        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params)
+        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'fully_parametrized':
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params)
+        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params)
+        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
@@ -669,12 +710,40 @@ def interference_circuit(the_s_channel, the_s_params, the_t_channel, the_t_param
     beta = torch.abs(the_s_observable[1] * the_t_observable[1])
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
-    #phases = qml.state()
-
-    #print(phases)
-
-    #for i in range(len(phases)):
-        #phases[i] = phases[i]/np.abs(phases[i])
-        #print(phases)
-
     return qml.expval(my_operator @ qml.PauliZ(wires=6))
+
+
+"""
+Quantum phase estimation circuit for extrapolating the global phase of the circuit 
+"""
+dev4 = qml.device("default.qubit", wires=6)
+
+
+@qml.qnode(dev4, interface='torch')
+def phase_estimation(the_channel, the_final_params, the_n_layers,  the_choice):
+    """
+   Circuit that extract the interference term of 2 Feynman Diagrams
+   :param: the_channel: graph representing the s-channel diagram
+   :param: the_final_params: value of the final parameters after training
+   :param: the_n_layers: number of layers
+   :param: the_choice: string that tells which feature map we want to use
+   :return: global phase of the circuit
+   """
+
+    the_circuit_params = the_final_params[:-2]
+
+    if the_choice == 'parametrized':
+
+        parametric_qgnn(the_channel, the_n_layers, the_circuit_params)
+
+    elif the_choice == 'unparametrized':
+        qgnn(the_channel, the_n_layers, the_circuit_params)
+
+    elif the_choice == 'fully_parametrized':
+        fully_parametric_qgnn(the_channel, the_n_layers, the_circuit_params)
+
+    else:
+        print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
+        return 0
+
+    return qml.state()
