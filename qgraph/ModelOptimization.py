@@ -7,12 +7,13 @@ from qgraph import expect_value
 import matplotlib.pyplot as plt
 
 
-def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
+def predict(the_dataset, the_weights, the_n_layers, the_choice: str, massive: bool = False):
     """
     :param the_dataset: either validation or test set, list of datas
     :param the_weights: array of trained parameters
     :param the_n_layers: number of layers of the ansatz (depth of the circuit)
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: list of predictions
     """
     predictions = []
@@ -20,7 +21,7 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str):
     the_observable_weights = the_weights[-2:]
 
     for element in the_dataset:
-        probability = expect_value(element[0], the_n_layers, the_circuit_weights, the_choice)
+        probability = expect_value(element[0], the_n_layers, the_circuit_weights, the_choice, massive)
         output = torch.abs(the_observable_weights[0])*probability[0][0] + torch.abs(the_observable_weights[1])*probability[0][1]
         predictions.append(output)
 
@@ -44,7 +45,7 @@ here the_training_set must be a list tuple (graph, output)!!!!!
 
 
 def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the_n_epochs, the_train_file: str,
-               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
     """
     Version of training function for a dataset composed by a single Feynman diagram
     :param  the_training_loader: DataLoader object of the training set
@@ -55,6 +56,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     :param the_val_file: file where I save the validation loss function per epoch
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 
@@ -77,7 +79,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
                            item[1][i]) for i in range(len(item[0]))]
 
             def opt_func():  # defining an optimization function for the training of the model
-                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
+                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice, massive=massive)
                 mini_batch_truth = [element[1] for element in mini_batch]
                 loss = get_mse(mini_batch_predictions, mini_batch_truth)
                 costs.append(loss.item())
@@ -121,7 +123,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
 
 
 def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
-               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
     """
     Version of training function for a complete dataset (with more than 1 Feynman diagram), for
     which I want to divide the loss of each diagram
@@ -134,6 +136,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
     :param the_val_file: file where I save the validation loss function per epoch
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 
@@ -157,7 +160,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
                            item[1][i]) for i in range(len(item[0]))]
 
             def opt_func():  # defining an optimization function for the training of the model
-                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
+                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice, massive=massive)
                 mini_batch_truth = [element[1] for element in mini_batch]
                 loss = get_mse(mini_batch_predictions, mini_batch_truth)
                 costs.append(loss.item())
@@ -210,13 +213,14 @@ here the_validation_set must be a list tuple (graph, output)!!!!!
 """
 
 
-def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'parametrized', the_n_layers=3):
+def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'parametrized', the_n_layers=3, massive: bool = False):
     """
     Function for validation step (we do it after each epoch of the training process)
     :param the_validation_loader: DataLoader object of the validation set
     :param the_weights: parameters to insert in the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :param the_n_layers: numbers of layers of the quantum circuit
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_validation_loss: list of loss values for each point of the validation set after prediction
     """
 
@@ -230,7 +234,7 @@ def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'param
     # define a list of ground truth values
     the_validation_truth = [element[1].detach().numpy() for element in the_validation_set]
     # define a list of prediction
-    the_validation_predictions = predict(the_validation_set, the_weights, the_n_layers, the_choice)
+    the_validation_predictions = predict(the_validation_set, the_weights, the_n_layers, the_choice, massive=massive)
     # the_validation_truth = np.array(the_validation_truth, dtype=object)
     assert len(the_validation_truth) == len(the_validation_predictions), "The number of predictions and true labels is not equal"
 
@@ -245,7 +249,8 @@ function for predicting and plotting the test_set
 """
 
 
-def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3, the_choice: str = 'parametrized'):
+def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3,
+                    the_choice: str = 'parametrized', massive: bool = False):
     """
     this function compute the predicted outputs of unknonw datas (testset) and compare them
     to true output of them with a plot
@@ -254,6 +259,7 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     :param: the_test_file: file where I save the predictions of the test set
     :param: the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
 
@@ -270,7 +276,7 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     # convert each element from torch tensor into numpy array for the plot
     truth = [i[1].detach().numpy() for i in targets]  # here I define a list of the true values
     angles = [i[0].graph['theta'] for i in targets]  # here I build a list of scattering angles values
-    targets = predict(targets, the_params, the_n_layers, the_choice)
+    targets = predict(targets, the_params, the_n_layers, the_choice, massive=massive)
     targets = [i.detach().numpy() for i in targets]  # here I build a list of predicted outputs
 
     # plotting lines
@@ -285,7 +291,7 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     np.savetxt(the_test_file, targets)
 
 
-def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, the_choice: str = 'parametrized'):
+def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
     """
     this function compute the predicted outputs of unknonw datas (testset) and compare them
     to true output of them with a plot
@@ -294,6 +300,7 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     :param: the_y: list with the mean and the standard deviation of the output for the inverse transformation
     :param: the_n_layers: numbers of layers of the quantum circuit
     :param:  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
 
@@ -316,7 +323,7 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     # convert each element from torch tensor into numpy array for the plot
     truth_e_mu_s = [i[1].detach().numpy() for i in targets_e_mu_s]  # here I define a list of the true values
     angles_e_mu_s = [i[0].graph['theta'] for i in targets_e_mu_s]  # here I build a list of scattering angles values
-    targets_e_mu_s = predict(targets_e_mu_s, the_params, the_n_layers, the_choice)
+    targets_e_mu_s = predict(targets_e_mu_s, the_params, the_n_layers, the_choice, massive=massive)
     targets_e_mu_s = [i.detach().numpy() for i in targets_e_mu_s]  # here I build a list of predicted outputs
 
     # plotting lines
@@ -335,7 +342,7 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     # convert each element from torch tensor into numpy array for the plot
     truth_e_e_s = [i[1].detach().numpy() for i in targets_e_e_s]  # here I define a list of the true values
     angles_e_e_s = [i[0].graph['theta'] for i in targets_e_e_s]  # here I build a list of scattering angles values
-    targets_e_e_s = predict(targets_e_e_s, the_params, the_n_layers, the_choice)
+    targets_e_e_s = predict(targets_e_e_s, the_params, the_n_layers, the_choice, massive=massive)
     targets_e_e_s = [i.detach().numpy() for i in targets_e_e_s]  # here I build a list of predicted outputs
 
     # plotting lines
@@ -354,7 +361,7 @@ def total_test_prediction(the_test_loader, the_params, the_y, the_n_layers=3, th
     # convert each element from torch tensor into numpy array for the plot
     truth_e_e_t = [i[1].detach().numpy() for i in targets_e_e_t]  # here I define a list of the true values
     angles_e_e_t = [i[0].graph['theta'] for i in targets_e_e_t]  # here I build a list of scattering angles values
-    targets_e_e_t = predict(targets_e_e_t, the_params, the_n_layers, the_choice)
+    targets_e_e_t = predict(targets_e_e_t, the_params, the_n_layers, the_choice, massive=massive)
 
     targets_e_e_t = [i.detach().numpy() for i in targets_e_e_t]  # here I build a list of predicted outputs
 
@@ -379,7 +386,7 @@ trial version to check the behaviour of the  parameters associated to the ZZ-lay
 
 def check_train(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs,
                 the_l: int, the_m: int, the_train_file: str, the_val_file: str, the_n_layers=3,
-                the_choice: str = 'parametrized'):
+                the_choice: str = 'parametrized', massive: bool = False):
     """
     :param  the_training_loader: DataLoader object of the training set
     :param the_validation_s_loader: DataLoader object of the validation set of the Bhabha s-channel
@@ -392,6 +399,7 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
     :param the_val_file: file where I save the validation loss function per epoch
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 
@@ -423,7 +431,7 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
                            item[1][i]) for i in range(len(item[0]))]
 
             def opt_func():  # defining an optimization function for the training of the model
-                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice)
+                mini_batch_predictions = predict(mini_batch, the_weights, the_n_layers, the_choice, massive=massive)
                 mini_batch_truth = [element[1] for element in mini_batch]
                 loss = get_mse(mini_batch_predictions, mini_batch_truth)
                 costs.append(loss.item())
@@ -444,8 +452,8 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
         training_loss = np.mean(costs)
         epoch_loss.append(training_loss)
 
-        the_s_val = validation_qgnn(the_validation_s_loader, the_weights, the_choice, the_n_layers)
-        the_t_val = validation_qgnn(the_validation_t_loader, the_weights, the_choice, the_n_layers)
+        the_s_val = validation_qgnn(the_validation_s_loader, the_weights, the_choice, the_n_layers, massive=massive)
+        the_t_val = validation_qgnn(the_validation_t_loader, the_weights, the_choice, the_n_layers, massive=massive)
         validation_s_loss.append(the_s_val)
         validation_t_loss.append(the_t_val)
 

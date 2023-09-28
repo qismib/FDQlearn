@@ -8,6 +8,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 num_layers = [3, 5]
 elements = 500  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
+massive_regime = False
+
 file1 = '../data/dataset/QED_data_e_annih_e_s.csv'
 file2 = '../data/dataset/QED_data_e_annih_e_t.csv'
 interference_file = '../data/interference/interference_outcomes.txt'
@@ -37,7 +39,8 @@ t_channel = FeynmanDiagramDataset(the_file_path=file2)
 s_channel = DataLoader(s_channel, batch_size=1)
 t_channel = DataLoader(t_channel, batch_size=1)
 
-interf, angles_1, s_phases, t_phases = interference(s_channel, s_params, t_channel, t_params, num_layers, feature_map)
+interf, angles_1, s_phases, t_phases = interference(s_channel, s_params, t_channel, t_params, num_layers,
+                                                    feature_map, massive=massive_regime)
 print('finito')
 
 np.savetxt(interference_file, np.abs(interf))
@@ -45,7 +48,7 @@ np.savetxt('../data/interference/interference_angles.txt', angles_1)
 np.savetxt(s_phase_file, s_phases)
 np.savetxt(t_phase_file, t_phases)
 
-# m_squared, angles_2 = matrix_squared(s_channel, s_params, t_channel, t_params, num_layers, feature_map)
+# m_squared, angles_2 = matrix_squared(s_channel, s_params, t_channel, t_params, num_layers, feature_map, massive=massive_regime)
 
 # np.savetxt(total_matrix_file, m_squared)
 # np.savetxt('../data/interference/total_matrix_angles.txt', angles_2)

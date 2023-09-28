@@ -8,6 +8,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 num_layers = [3, 5]
 elements = 500  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
+massive = False
+
 file1 = '../data/dataset/QED_data_e_annih_e_s.csv'
 file2 = '../data/dataset/QED_data_e_annih_e_t.csv'
 s_phase_file = '../data/interference/s_global_phases.txt'
@@ -44,8 +46,8 @@ for s, t in zip(s_channel, t_channel):
     t_element = (to_networkx(data=t[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
                              edge_attrs=['mass', 'spin', 'charge'], to_undirected=True), t[1][0])
 
-    s_phases.append(global_phase(s_element, s_params, num_layers[0], feature_map))
-    t_phases.append(global_phase(t_element, t_params, num_layers[1], feature_map))
+    s_phases.append(global_phase(s_element, s_params, num_layers[0], feature_map, massive=massive))
+    t_phases.append(global_phase(t_element, t_params, num_layers[1], feature_map, massive=massive))
 
 np.savetxt(s_phase_file, s_phases)
 np.savetxt(t_phase_file, t_phases)

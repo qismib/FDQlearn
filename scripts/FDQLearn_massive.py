@@ -86,18 +86,18 @@ num_layers = 5
 num_epoch = 100
 batch = 20
 elements = 750
-massive_regime = False
+massive_regime = True
 
-csv_file = '../data/dataset/QED_data_e_annih_e_t.csv'
-train_file = '../data/training_test_results/parametrized_t_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_t_channel_val_loss.txt'
-test_pred_file = '../data/training_test_results/parametrized_t_channel_predictions.txt'
-truth_file = '../data/training_test_results/parametrized_t_channel_ground_truth.txt'
-final_params_file = '../data/interference/parametrized_channel_t_final_params.txt'
-standardization_file = '../data/interference/parametrized_channel_t_standardization.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_t_massive.csv'
+train_file = '../data/training_test_results/parametrized_t_massive_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_t_massive_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_t_massive_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_t_massive_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_t_massive_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_t_massive_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
 
 params = main(num_layers, num_epoch, csv_file, train_file, val_file, test_pred_file, truth_file, final_params_file,
-              standardization_file, feature_map, batch, elements, massive=massive_regime)
+              standardization_file, feature_map, batch, elements, massive=massive)

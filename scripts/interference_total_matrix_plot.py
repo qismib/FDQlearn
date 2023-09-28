@@ -19,7 +19,7 @@ x = np.linspace(0.5, np.pi, 1000)
 y = function(x)
 
 plt.plot(angles_1, interf, 'ro', label='circuit prediction')
-# plt.plot(x, y, label='theoretical result')
+plt.plot(x, y, label='theoretical result')
 plt.legend(loc='upper right')
 plt.show()
 

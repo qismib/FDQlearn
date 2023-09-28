@@ -8,20 +8,21 @@ import matplotlib.pyplot as plt
 
 
 def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: str,
-         the_param_file: str, choice: str, batch_size: int = 20, the_elem: int = 500):
+         the_param_file: str, choice: str, batch_size: int = 20, the_elem: int = 500, massive: bool = False):
     """
-   Main function for QML algorithm for a dataset composed by different Feynman diagrams (s and t channel
-   of Bhabha scattering)
-   :param: n_layers: number of layers used for the ansatz
-   :param: the_file: string with the path of the csv file from which I want to build the dataset
-   :param: the_train_file: file for the training loss over the training process
-   :param: the_val_file:  file for the validation loss at each epoch
-   :param: the_param_file: file for the final values of the parameters of the network
-   :param: the_choice: if we use a parametrized feature map or not
-   :param: the_batch_size: batch size of the training dataset
-   :param: the_elem: number of elements to pick randomly from the csv (number of elements of the dataset)
-   :return: None
-   """
+    Main function for QML algorithm for a dataset composed by different Feynman diagrams (s and t channel
+    of Bhabha scattering)
+    :param: n_layers: number of layers used for the ansatz
+    :param: the_file: string with the path of the csv file from which I want to build the dataset
+    :param: the_train_file: file for the training loss over the training process
+    :param: the_val_file:  file for the validation loss at each epoch
+    :param: the_param_file: file for the final values of the parameters of the network
+    :param: the_choice: if we use a parametrized feature map or not
+    :param: the_batch_size: batch size of the training dataset
+    :param: the_elem: number of elements to pick randomly from the csv (number of elements of the dataset)
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :return: None
+    """
 
     q_dataset = FeynmanDiagramDataset(the_file_path=the_file, the_n_elements=the_elem)
 
@@ -46,6 +47,13 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     validation_s_loader = DataLoader(validation_s_set)
     validation_t_loader = DataLoader(validation_t_set)
 
+    # I put kinetic_params = 1 if we're in the massless regime
+    # I put kinetic_params = 2 if we're in the massive regime
+    if massive == False:
+        kinetic_num = 1
+    else:
+        kinetic_num = 2
+
     """
     CALCULATING THE NUMBER OF PARAMETERS I HAVE TO DEFINE FOR THE QGNN
     """
@@ -66,28 +74,28 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     obs_params = 2
 
     if choice == 'unparametrized':
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (m + n + kinetic_num) + obs_params, dtype=torch.float)  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
         init_params.requires_grad = True
     elif choice == 'parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (m + n + kinetic_num) + l + obs_params, dtype=torch.float)  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
         init_params.requires_grad = True
     elif choice == 'fully_parametrized':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (m + n + 1) + 3*l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (m + n + kinetic_num) + 3*l + obs_params, dtype=torch.float)  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
         init_params.requires_grad = True
     elif choice == 'fully_connected':
         l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
-        init_params = 0.01 * torch.randn(n_layers * (n*(n-1)//2 + n + 1) + l + obs_params, dtype=torch.float)  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        init_params = 0.01 * torch.randn(n_layers * (n*(n-1)//2 + n + kinetic_num) + l + obs_params, dtype=torch.float)  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
         init_params.requires_grad = True
     else:
         print('choice can be either unparametrized, parametrized, fully_parametrized or fully_connected')
 
     final_params = merged_train_qgnn(training_loader, validation_s_loader, validation_t_loader, init_params, max_epoch,
-                                     the_train_file, the_val_file, n_layers, choice)
+                                     the_train_file, the_val_file, n_layers, choice, massive=massive)
     array_params = [i.detach().numpy() for i in final_params]
     np.savetxt(the_param_file, array_params)
-    total_test_prediction(validation_loader, final_params, y_stat, n_layers, choice)
+    total_test_prediction(validation_loader, final_params, y_stat, n_layers, choice, massive=massive)
 
 
 # fixing the seeds:
@@ -99,6 +107,8 @@ num_layers = 3
 num_epoch = 30
 batch = 20
 elements = 750
+massive_regime = False
+
 file = '../data/dataset/QED_data_qed.csv'
 train_file = '../data/training_test_results/parametrized_total_train_loss.txt'
 val_file = '../data/training_test_results/parametrized_total_val_loss.txt'
@@ -108,4 +118,4 @@ test_param_file = '../data/interference/parametrized_total_final_params.txt'
 feature_map = 'fully_connected'  # Must be either "parametrized", "unparametrized", "fully_parametrized",
 # or "fully_connected", it indicates the kind of feature map to use in training
 
-main(num_layers, num_epoch, file, train_file, val_file, test_param_file, feature_map, batch, elements)
+main(num_layers, num_epoch, file, train_file, val_file, test_param_file, feature_map, batch, elements, massive=massive_regime)

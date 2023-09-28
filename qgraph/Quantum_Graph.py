@@ -122,14 +122,20 @@ ROTATION DEPENDENT ON 2 ANGLES, MOMENTUM AND SCATTERING ANGLES, THEY ENCODE THE 
 """
 
 
-def Kinetic_layer(the_G):
+def Kinetic_layer(the_G, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
-    for the_node in the_G.nodes:
-        # qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)  # for a circuit with momentum
-        qml.U1(the_G.graph['theta'], wires=the_node) # for a circuit without momentum
+
+    if massive == True:
+        for the_node in the_G.nodes:
+            qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)  # for a circuit with momentum
+
+    else:
+        for the_node in the_G.nodes:
+            qml.U1(the_G.graph['theta'], wires=the_node) # for a circuit without momentum
 
 
 ########################################################################################################################
@@ -142,9 +148,10 @@ AND BY INSERTING THE KINETIC LAYER AT THE END
 """
 
 
-def qgnn_feature_map(the_G):
+def qgnn_feature_map(the_G, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
 
@@ -166,7 +173,7 @@ def qgnn_feature_map(the_G):
 
         qml.Barrier()
     # encode angle and momentum features
-    Kinetic_layer(the_G)
+    Kinetic_layer(the_G, massive)
 
     qml.Barrier()
 
@@ -178,10 +185,11 @@ TRAINABLE PARAMETER, AND BY INSERTING THE KINETIC LAYER AT THE END
 """
 
 
-def parametric_qgnn_feature_map(the_G, the_params):
+def parametric_qgnn_feature_map(the_G, the_params, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
     :param: the_params: number of trainable parameters that weights the edge features
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
     assert len(the_params) == len(['mass', 'spin', 'charge']), 'parameters must be equal to the number of edge features'
@@ -203,7 +211,7 @@ def parametric_qgnn_feature_map(the_G, the_params):
     qml.Barrier()
 
     # encode angle and momentum features
-    Kinetic_layer(the_G)
+    Kinetic_layer(the_G, massive)
 
     qml.Barrier()
 
@@ -213,10 +221,11 @@ PARAMETRIC FEATURE MAP WHERE I USE THE FULLY_PARAMETRIC_ZZ_LAYER FUNCTION
 """
 
 
-def fully_parametric_qgnn_feature_map(the_G, the_params):
+def fully_parametric_qgnn_feature_map(the_G, the_params, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
     :param: the_params: number of trainable parameters that weights the edge features
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
     assert len(the_params) == 3*len(['mass', 'spin', 'charge']), 'parameters must be equal to the number of edge ' \
@@ -239,7 +248,7 @@ def fully_parametric_qgnn_feature_map(the_G, the_params):
     qml.Barrier()
 
     # encode angle and momentum features
-    Kinetic_layer(the_G)
+    Kinetic_layer(the_G, massive)
 
     qml.Barrier()
 
@@ -251,13 +260,15 @@ ANSATZ CIRCUIT FOR THE QGNN
 """
 
 
-def qgnn_ansatz(the_G, the_n_layers, the_params):
+def qgnn_ansatz(the_G, the_n_layers, the_params, massive: bool = False):
     """
     Trainable ansatz having l * (m + n + 2) parameters, where m number of arcs, n is the number of vertices,
     # l is the number of layers and +2 for theta and p parameters
     :param: the_G: graph representing a feynman diagram
     :param: the_n_layers: number of layers (depth of the circuit)
     :param: the_params: value of the parameters
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :return: None
     """
     the_m_init = 0
     the_m_fin = 0
@@ -277,24 +288,27 @@ def qgnn_ansatz(the_G, the_n_layers, the_params):
             the_m_prop += 1
             the_prop.append(node)
 
+    # I put kinetic_params = 1 if we're in the massless regime
+    # I put kinetic_params = 2 if we're in the massive regime
+    if massive == False:
+        kinetic_num = 1
+    else:
+        kinetic_num = 2
+
     the_n = len(the_G.nodes)
     the_m = int((the_m_init + the_m_fin + (the_m_prop - 1) / 2) * the_m_prop)
     # I connect each initial node to any possible propagator,
     # the same for the final nodes
 
-    # number of parameters with the momentum p
-    # assert len(the_params) == the_n_layers * (the_m + the_n + 2), "Number of parameters is wrong"
-
-    # number of parameters without the momentum p
-    assert len(the_params) == the_n_layers * (the_m + the_n + 1), "Number of parameters is wrong"
+    assert len(the_params) == the_n_layers * (the_m + the_n + kinetic_num), "Number of parameters is wrong"
 
     for i in range(the_n_layers):
         # here I divide the_layer_params list into a list for parameters that will act on edges,
         # parameters that will act on nodes and the ones for momentum and angle features
-        the_layer_params = the_params[i * (the_m + the_n + 1):(i + 1) * (the_m + the_n + 1)]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_layer_params = the_params[i * (the_m + the_n + kinetic_num):(i + 1) * (the_m + the_n + kinetic_num)]  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
         the_edge_params = the_layer_params[:the_m]
-        the_nodes_params = the_layer_params[the_m:-1]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
-        the_kinetic_params = the_layer_params[-1:]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_nodes_params = the_layer_params[the_m:-kinetic_num]  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
+        the_kinetic_params = the_layer_params[-kinetic_num:]  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
 
         # ind is the index of the_edge_params, trainable parameters.
         ind = 0
@@ -326,8 +340,12 @@ def qgnn_ansatz(the_G, the_n_layers, the_params):
         # U2-gate (rotation and phase-shift on a single qubit)
         for j in the_G.nodes:
             qml.RX(the_nodes_params[j], wires=j)
-            # qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)  # for a circuit with momentum
-            qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
+
+            if kinetic_num == 2:
+                qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)  # for a circuit with momentum
+
+            elif kinetic_num == 1:
+                qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
 
 
 """
@@ -335,32 +353,37 @@ FULLY CONNECTED ANSATZ CIRCUIT FOR THE QGNN
 """
 
 
-def fully_connected_ansatz(the_G, the_n_layers, the_params):
+def fully_connected_ansatz(the_G, the_n_layers, the_params, massive:bool=False):
     """
     Trainable fully connected ansatz having l * (n*(n-1)/2 +n + 1 (2)) parameters, where n is the number of vertices,
     # l is the number of layers and +1 (+2) for theta (and p) parameters
     :param: the_G: graph representing a feynman diagram
     :param: the_n_layers: number of layers (depth of the circuit)
     :param: the_params: value of the parameters
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :return: None
     """
+
+    # I put kinetic_params = 1 if we're in the massless regime
+    # I put kinetic_params = 2 if we're in the massive regime
+    if massive == False:
+        kinetic_num = 1
+    else:
+        kinetic_num = 2
 
     # number of edges of the graph
     the_n = len(the_G.nodes)
     permutations = the_n * (the_n - 1) // 2
 
-    # number of parameters with the momentum p
-    # assert len(the_params) == the_n_layers * (permutations + the_n + 2), "Number of parameters is wrong"
-
-    # number of parameters without the momentum p
-    assert len(the_params) == the_n_layers * (permutations + the_n + 1), "Number of parameters is wrong"
+    assert len(the_params) == the_n_layers * (permutations + the_n + kinetic_num), "Number of parameters is wrong"
 
     for i in range(the_n_layers):
         # here I divide the_layer_params list into a list for parameters that will act on edges,
         # parameters that will act on nodes and the ones for momentum and angle features
-        the_layer_params = the_params[i * (permutations + the_n + 1):(i + 1) * (permutations + the_n + 1)]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_layer_params = the_params[i * (permutations + the_n + kinetic_num):(i + 1) * (permutations + the_n + kinetic_num)]  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
         the_edge_params = the_layer_params[:permutations]
-        the_nodes_params = the_layer_params[permutations:-1]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
-        the_kinetic_params = the_layer_params[-1:]  # IF YOU ADD THE MOMENTUM P YOU HAVE TO PUT 2 INSTEAD OF 1
+        the_nodes_params = the_layer_params[permutations:-kinetic_num]  # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
+        the_kinetic_params = the_layer_params[-kinetic_num:]  #  KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
 
         # ind is the index of the_edge_params, trainable parameters.
         ind = 0
@@ -376,8 +399,12 @@ def fully_connected_ansatz(the_G, the_n_layers, the_params):
         # U2-gate (rotation and phase-shift on a single qubit)
         for j in the_G.nodes:
             qml.RX(the_nodes_params[j], wires=j)
-            # qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)  # for a circuit with momentum
-            qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
+
+            if kinetic_num == 2:
+                qml.U2(the_kinetic_params[0], the_kinetic_params[1], wires=j)  # for a circuit with momentum
+
+            elif kinetic_num == 1:
+                qml.U1(the_kinetic_params[0], wires=j)  # for a circuit without momentum
 
 
 ########################################################################################################################
@@ -388,11 +415,12 @@ FUNCTION THAT DEFINE THE GLOBAL QUANTUM CIRCUIT (WITH UNPARAMETRIZED FEATURE MAP
 """
 
 
-def qgnn(the_G, the_n_layers, the_params):
+def qgnn(the_G, the_n_layers, the_params, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
     :param: the_n_layers: number of layers
     :param: the_params: value of the parameters
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
 
@@ -400,10 +428,10 @@ def qgnn(the_G, the_n_layers, the_params):
     the_n_wires = len(the_G.nodes)
 
     # the feature map
-    qgnn_feature_map(the_G)
+    qgnn_feature_map(the_G, massive)
 
     # the ansatz
-    qgnn_ansatz(the_G, the_n_layers, the_params)
+    qgnn_ansatz(the_G, the_n_layers, the_params, massive)
 
 
 """
@@ -411,11 +439,12 @@ FUNCTION THAT DEFINE THE GLOBAL QUANTUM CIRCUIT (WITH PARAMETRIZED FEATURE MAP)
 """
 
 
-def parametric_qgnn(the_G, the_n_layers, the_params):
+def parametric_qgnn(the_G, the_n_layers, the_params, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
     :param: the_n_layers: number of layers
     :param: the_params: value of the parameters
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
 
@@ -427,10 +456,10 @@ def parametric_qgnn(the_G, the_n_layers, the_params):
     ansatz_params = the_params[3:]
 
     # the parametric feature map
-    parametric_qgnn_feature_map(the_G, feat_params)
+    parametric_qgnn_feature_map(the_G, feat_params, massive)
 
     # the ansatz
-    qgnn_ansatz(the_G, the_n_layers, ansatz_params)
+    qgnn_ansatz(the_G, the_n_layers, ansatz_params, massive)
 
 
 """
@@ -438,11 +467,12 @@ FUNCTION THAT DEFINE THE GLOBAL QUANTUM CIRCUIT (WITH FULLY PARAMETRIZED FEATURE
 """
 
 
-def fully_parametric_qgnn(the_G, the_n_layers, the_params):
+def fully_parametric_qgnn(the_G, the_n_layers, the_params, massive: bool = False):
     """
     :param: the_G: graph representing the Feynamn diagram
     :param: the_n_layers: number of layers
     :param: the_params: value of the parameters
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
 
@@ -454,10 +484,10 @@ def fully_parametric_qgnn(the_G, the_n_layers, the_params):
     ansatz_params = the_params[9:]
 
     # the parametric feature map
-    fully_parametric_qgnn_feature_map(the_G, feat_params)
+    fully_parametric_qgnn_feature_map(the_G, feat_params, massive)
 
     # the ansatz
-    qgnn_ansatz(the_G, the_n_layers, ansatz_params)
+    qgnn_ansatz(the_G, the_n_layers, ansatz_params, massive)
 
 
 """
@@ -465,13 +495,14 @@ FUNCTION THAT DEFINE THE GLOBAL QUANTUM CIRCUIT (WITH FULLY CONNECTED ANSATZ)
 """
 
 
-def fully_connected_qgnn(the_G, the_n_layers, the_params):
+def fully_connected_qgnn(the_G, the_n_layers, the_params, massive: bool = False):
     """
-       :param: the_G: graph representing the Feynamn diagram
-       :param: the_n_layers: number of layers
-       :param: the_params: value of the parameters
-       :return: None
-       """
+    :param: the_G: graph representing the Feynamn diagram
+    :param: the_n_layers: number of layers
+    :param: the_params: value of the parameters
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :return: None
+    """
 
     # get the number of vertices
     the_n_wires = len(the_G.nodes)
@@ -481,10 +512,10 @@ def fully_connected_qgnn(the_G, the_n_layers, the_params):
     ansatz_params = the_params[3:]
 
     # the parametric feature map
-    parametric_qgnn_feature_map(the_G, feat_params)
+    parametric_qgnn_feature_map(the_G, feat_params, massive)
 
     # the ansatz
-    fully_connected_ansatz(the_G, the_n_layers, ansatz_params)
+    fully_connected_ansatz(the_G, the_n_layers, ansatz_params, massive)
 
 
 ########################################################################################################################
@@ -495,8 +526,8 @@ FUNCTION THAT DEFINE THE OBSERVABLE WE USE TO MAKE THE MEASURE FOR THE INTERFERE
 """
 
 
-def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=True),
-                    b=torch.tensor(1., dtype=torch.float, requires_grad=True)):
+def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_grad=False),
+                    b=torch.tensor(1., dtype=torch.float, requires_grad=False)):
     """
     :param: the_wire: qubit on which the operator acts
     :param: a, b: positive real coefficient
@@ -504,12 +535,12 @@ def bhabha_operator(the_wire=0, a=torch.tensor(2., dtype=torch.float, requires_g
     """
 
     assert a != b, "a and b must be different"
-    a = a.detach().numpy()
-    b = b.detach().numpy()
+    a = np.array(a.detach().numpy(), requires_grad=False)
+    b = np.array(b.detach().numpy(), requires_grad=False)
 
     # H = a*qml.Projector(basis_state=[0], wires=the_wire) + b*qml.Projector(basis_state=[1], wires=the_wire)
 
-    mat = np.array([[np.abs(a, requires_grad=True), 0], [0, np.abs(b, requires_grad=True)]])
+    mat = np.array([[np.abs(a), 0], [0, np.abs(b)]])
     H = qml.Hermitian(mat, wires=the_wire)
     # obs = qml.Hamiltonian((1,), (H,))
 
@@ -530,9 +561,9 @@ def global_phase_operator(the_angle, the_wire: int = 0):
     :return: None
     """
     qml.PhaseShift(the_angle, wires=the_wire)
-    qml.PauliX(wires=0)
+    qml.PauliX(wires=the_wire)
     qml.PhaseShift(the_angle, wires=the_wire)
-    qml.PauliX(wires=0)
+    qml.PauliX(wires=the_wire)
 
 ########################################################################################################################
 
@@ -541,27 +572,28 @@ dev1 = qml.device("default.qubit", wires=6)
 
 
 @qml.qnode(dev1, interface='torch', diff_method="backprop")
-def expect_value(the_G, the_n_layers, the_params, the_choice):
+def expect_value(the_G, the_n_layers, the_params, the_choice, massive: bool = False):
     """
-    :param: the_G: graph representing the Feynamn diagram
+    :param: the_G: graph representing the Feynman diagram
     :param: the_n_layers: number of layers
     :param: the_params: value of the parameters
     :param: the_choice: string that tells which feature map we want to use
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: expectation value of a diagonal, positive hermitian operator on the first qubit
     """
 
     the_circuit_params = the_params
 
     if the_choice == 'parametrized':
-        parametric_qgnn(the_G, the_n_layers, the_circuit_params)
+        parametric_qgnn(the_G, the_n_layers, the_circuit_params, massive=massive)
     elif the_choice == 'unparametrized':
-        qgnn(the_G, the_n_layers, the_circuit_params)
+        qgnn(the_G, the_n_layers, the_circuit_params, massive=massive)
     elif the_choice == 'fully_parametrized':
-        fully_parametric_qgnn(the_G, the_n_layers, the_circuit_params)
+        fully_parametric_qgnn(the_G, the_n_layers, the_circuit_params, massive=massive)
     elif the_choice == 'fully_connected':
-        fully_connected_qgnn(the_G, the_n_layers, the_circuit_params)
+        fully_connected_qgnn(the_G, the_n_layers, the_circuit_params, massive=massive)
     else:
-        print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
+        print("Error, the_choice must be either 'parametrized', 'unparametrized', 'fully_parametrized' or 'fully_connected'")
         return 0
 
     # my_operator = qml.PauliZ(0)
@@ -590,7 +622,7 @@ dev2 = qml.device("default.qubit", wires=7)
 
 @qml.qnode(dev2, interface='torch', diff_method="adjoint")
 def total_matrix_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel, the_t_params, the_t_phase,
-                         the_layers, the_choice: str = 'parametrized'):
+                         the_layers, the_choice: str = 'parametrized', massive: bool = True):
     """
     Circuit that extract the squared total matrix element of 2 Feynman Diagrams
     :param: the_s_channel: graph representing the s-channel diagram
@@ -601,6 +633,7 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
     :param: the_t_phase: global phase of the t-channel
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: expectation value of a composite operator that is the prediction of the matrix element squared
     """
 
@@ -612,25 +645,24 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
     qml.Hadamard(wires=6)
 
     if the_choice == 'parametrized':
-
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'unparametrized':
-        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'fully_parametrized':
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     else:
@@ -655,9 +687,9 @@ scattering processes)
 dev3 = qml.device("default.qubit", wires=7)
 
 
-@qml.qnode(dev3, interface='torch')
+@qml.qnode(dev3, interface='torch', diff_method='adjoint')
 def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel, the_t_params, the_t_phase,
-                         the_layers, the_choice: str = 'parametrized'):
+                         the_layers, the_choice: str = 'parametrized', massive: bool = False):
     """
     Circuit that extract the interference term of 2 Feynman Diagrams
     :param: the_s_channel: graph representing the s-channel diagram
@@ -668,6 +700,7 @@ def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
     :param: the_t_phase: global phase of the t-channel
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: expectation value of a composite operator that is the prediction of the interference
     """
 
@@ -680,25 +713,25 @@ def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
 
     if the_choice == 'parametrized':
 
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params)
-        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params)
-        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'unparametrized':
-        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params)
-        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params)
-        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     elif the_choice == 'fully_parametrized':
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params)
-        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
         qml.PauliX(wires=6)
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params)
-        # qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
@@ -707,7 +740,9 @@ def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
     qml.Hadamard(wires=6)
 
     alpha = torch.abs(the_s_observable[0] * the_t_observable[0])
+    alpha.requires_grad = False
     beta = torch.abs(the_s_observable[1] * the_t_observable[1])
+    beta.requires_grad = False
     my_operator = bhabha_operator(0, torch.sqrt(alpha), torch.sqrt(beta))
 
     return qml.expval(my_operator @ qml.PauliZ(wires=6))
@@ -720,27 +755,28 @@ dev4 = qml.device("default.qubit", wires=6)
 
 
 @qml.qnode(dev4, interface='torch')
-def phase_estimation(the_channel, the_final_params, the_n_layers,  the_choice):
+def phase_estimation(the_channel, the_final_params, the_n_layers,  the_choice, massive: bool = False):
     """
-   Circuit that extract the interference term of 2 Feynman Diagrams
-   :param: the_channel: graph representing the s-channel diagram
-   :param: the_final_params: value of the final parameters after training
-   :param: the_n_layers: number of layers
-   :param: the_choice: string that tells which feature map we want to use
-   :return: global phase of the circuit
-   """
+    Circuit that extract the interference term of 2 Feynman Diagrams
+    :param: the_channel: graph representing the s-channel diagram
+    :param: the_final_params: value of the final parameters after training
+    :param: the_n_layers: number of layers
+    :param: the_choice: string that tells which feature map we want to use
+    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :return: global phase of the circuit
+    """
 
     the_circuit_params = the_final_params[:-2]
 
     if the_choice == 'parametrized':
 
-        parametric_qgnn(the_channel, the_n_layers, the_circuit_params)
+        parametric_qgnn(the_channel, the_n_layers, the_circuit_params, massive=massive)
 
     elif the_choice == 'unparametrized':
-        qgnn(the_channel, the_n_layers, the_circuit_params)
+        qgnn(the_channel, the_n_layers, the_circuit_params, massive=massive)
 
     elif the_choice == 'fully_parametrized':
-        fully_parametric_qgnn(the_channel, the_n_layers, the_circuit_params)
+        fully_parametric_qgnn(the_channel, the_n_layers, the_circuit_params, massive=massive)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
