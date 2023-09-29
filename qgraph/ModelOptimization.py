@@ -13,7 +13,7 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str, massive: bo
     :param the_weights: array of trained parameters
     :param the_n_layers: number of layers of the ansatz (depth of the circuit)
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: list of predictions
     """
     predictions = []
@@ -56,7 +56,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     :param the_val_file: file where I save the validation loss function per epoch
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 
@@ -95,7 +95,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
         training_loss = np.mean(costs)
         epoch_loss.append(training_loss)
 
-        the_val = validation_qgnn(the_validation_loader, the_weights, the_choice, the_n_layers)
+        the_val = validation_qgnn(the_validation_loader, the_weights, the_choice, the_n_layers, massive=massive)
         validation_loss.append(the_val)
 
         if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
@@ -123,7 +123,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
 
 
 def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
-               the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
+                      the_val_file: str, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
     """
     Version of training function for a complete dataset (with more than 1 Feynman diagram), for
     which I want to divide the loss of each diagram
@@ -135,8 +135,8 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
     :param the_train_file: file where I save the training loss function per epoch
     :param the_val_file: file where I save the validation loss function per epoch
     :param the_n_layers: numbers of layers of the quantum circuit
-    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 
@@ -176,8 +176,8 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
         training_loss = np.mean(costs)
         epoch_loss.append(training_loss)
 
-        the_s_val = validation_qgnn(the_validation_s_loader, the_weights, the_choice, the_n_layers)
-        the_t_val = validation_qgnn(the_validation_t_loader, the_weights, the_choice, the_n_layers)
+        the_s_val = validation_qgnn(the_validation_s_loader, the_weights, the_choice, the_n_layers, massive=massive)
+        the_t_val = validation_qgnn(the_validation_t_loader, the_weights, the_choice, the_n_layers, massive=massive)
         validation_s_loss.append(the_s_val)
         validation_t_loss.append(the_t_val)
 
@@ -220,7 +220,7 @@ def validation_qgnn(the_validation_loader, the_weights, the_choice: str = 'param
     :param the_weights: parameters to insert in the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :param the_n_layers: numbers of layers of the quantum circuit
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_validation_loss: list of loss values for each point of the validation set after prediction
     """
 
@@ -258,7 +258,7 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     :param: the_params: parameters to insert in the quantum circuit
     :param: the_test_file: file where I save the predictions of the test set
     :param: the_n_layers: numbers of layers of the quantum circuit
-    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param:  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :param: massive: boolean value that indicates whether we're in massive or massless regime
     :return: None
     """
@@ -399,7 +399,7 @@ def check_train(the_training_loader, the_validation_s_loader, the_validation_t_l
     :param the_val_file: file where I save the validation loss function per epoch
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 

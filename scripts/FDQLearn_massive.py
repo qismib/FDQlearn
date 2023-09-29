@@ -23,10 +23,10 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
     # I put kinetic_params = 1 if we're in the massless regime
     # I put kinetic_params = 2 if we're in the massive regime
-    if massive == False:
-        kinetic_num = 1
-    else:
+    if massive is True:
         kinetic_num = 2
+    else:
+        kinetic_num = 1
 
     """
     CALCULATING THE NUMBER OF PARAMETERS I HAVE TO DEFINE FOR THE QGNN
@@ -82,22 +82,22 @@ torch.manual_seed(12345)
 np.random.seed(12345)
 
 
-num_layers = 5
+num_layers = 3
 num_epoch = 100
 batch = 20
 elements = 750
 massive_regime = True
 
-csv_file = '../data/dataset/QED_data_e_annih_e_t_massive.csv'
-train_file = '../data/training_test_results/parametrized_t_massive_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_t_massive_channel_val_loss.txt'
-test_pred_file = '../data/training_test_results/parametrized_t_massive_channel_predictions.txt'
-truth_file = '../data/training_test_results/parametrized_t_massive_channel_ground_truth.txt'
-final_params_file = '../data/interference/parametrized_channel_t_massive_final_params.txt'
-standardization_file = '../data/interference/parametrized_channel_t_massive_standardization.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_s_massive.csv'
+train_file = '../data/training_test_results/parametrized_s_massive_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_s_massive_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_s_massive_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_s_massive_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_s_massive_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_s_massive_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
 
 params = main(num_layers, num_epoch, csv_file, train_file, val_file, test_pred_file, truth_file, final_params_file,
-              standardization_file, feature_map, batch, elements, massive=massive)
+              standardization_file, feature_map, batch, elements, massive=massive_regime)

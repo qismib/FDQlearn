@@ -129,7 +129,7 @@ def Kinetic_layer(the_G, massive: bool = False):
     :return: None
     """
 
-    if massive == True:
+    if massive is True:
         for the_node in the_G.nodes:
             qml.U2(the_G.graph['p_norm'], the_G.graph['theta'], wires=the_node)  # for a circuit with momentum
 
@@ -290,7 +290,7 @@ def qgnn_ansatz(the_G, the_n_layers, the_params, massive: bool = False):
 
     # I put kinetic_params = 1 if we're in the massless regime
     # I put kinetic_params = 2 if we're in the massive regime
-    if massive == False:
+    if massive is False:
         kinetic_num = 1
     else:
         kinetic_num = 2
@@ -353,7 +353,7 @@ FULLY CONNECTED ANSATZ CIRCUIT FOR THE QGNN
 """
 
 
-def fully_connected_ansatz(the_G, the_n_layers, the_params, massive:bool=False):
+def fully_connected_ansatz(the_G, the_n_layers, the_params, massive: bool = False):
     """
     Trainable fully connected ansatz having l * (n*(n-1)/2 +n + 1 (2)) parameters, where n is the number of vertices,
     # l is the number of layers and +1 (+2) for theta (and p) parameters
@@ -366,7 +366,7 @@ def fully_connected_ansatz(the_G, the_n_layers, the_params, massive:bool=False):
 
     # I put kinetic_params = 1 if we're in the massless regime
     # I put kinetic_params = 2 if we're in the massive regime
-    if massive == False:
+    if massive is False:
         kinetic_num = 1
     else:
         kinetic_num = 2

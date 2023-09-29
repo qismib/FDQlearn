@@ -23,7 +23,7 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
 
     # I put kinetic_params = 1 if we're in the massless regime
     # I put kinetic_params = 2 if we're in the massive regime
-    if massive == False:
+    if massive is False:
         kinetic_num = 1
     else:
         kinetic_num = 2
