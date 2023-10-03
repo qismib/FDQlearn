@@ -33,7 +33,7 @@ def training_interference(s_loader, the_s_params, t_loader, the_t_params, the_in
     :param  the_n_epochs: number of epochs of the training process
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: the_weights: list of the final weights after the training
     """
 
@@ -68,8 +68,8 @@ def training_interference(s_loader, the_s_params, t_loader, the_t_params, the_in
                 assert s_data.graph['theta'] == t_data.graph['theta'] and \
                        s_data.graph['p_norm'] == t_data.graph['p_norm'], "the angles and the momenta must be the same"
 
-                prediction = interference_prediction(s_data, the_s_params, t_data, the_t_params,
-                                                     the_weights, the_n_layers, the_choice, massive=massive)
+                prediction = interference_prediction(s_data, the_s_params, t_data, the_t_params, the_weights,
+                                                     the_n_layers, the_choice, massive=massive)
 
                 truth = interference_truth(s_data.graph['theta'])
 
@@ -117,7 +117,7 @@ def one_data_training(s_loader, the_s_params, t_loader, the_t_params, the_n_epoc
     :param  the_n_epochs: number of epochs of the training process
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: output: predictions of the circuit
     :return: truth: theoretical values of the interference term
     :return: angles: list of the angle's values for each data
@@ -160,8 +160,8 @@ def one_data_training(s_loader, the_s_params, t_loader, the_t_params, the_n_epoc
                 assert s_element.graph['theta'] == t_element.graph['theta'] and \
                        s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
 
-                prediction = interference_prediction(s_element, the_s_params, t_element, the_t_params,
-                                                       the_weights, the_n_layers, the_choice, massive=massive)
+                prediction = interference_prediction(s_element, the_s_params, t_element, the_t_params, the_weights,
+                                                     the_n_layers, the_choice, massive=massive)
 
                 truth = interference_truth(s_element.graph['theta'])
 
@@ -187,8 +187,8 @@ def one_data_training(s_loader, the_s_params, t_loader, the_t_params, the_n_epoc
             res = [len(s_set), convergence, training_loss, elapsed]
             print("Element: {:2d} | Epoch: {:2d} | Training loss: {:3f} | Elapsed Time per Epoch: {:3f}".format(*res))
 
-        inter_pred.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, the_weights,
-                                                  the_n_layers, the_choice, massive=massive))
+        inter_pred.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, the_weights, the_n_layers,
+                                                  the_choice, massive=massive))
         ground_truth.append(interference_truth(s_element.graph['theta']))
         angles.append(s_element.graph['theta'])
 
@@ -206,7 +206,7 @@ def interference_test(s_test_loader, the_s_params, t_test_loader, the_t_params, 
     :param the_final_weights: parameters to insert in the quantum circuit after the tuning (only 2 values)
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: output: predictions of the circuit
     :return: truth: theoretical values of the interference term
     :return: angles: list of the angle's values for each data
@@ -222,15 +222,16 @@ def interference_test(s_test_loader, the_s_params, t_test_loader, the_t_params, 
         # converting for each batch any DataLoader item into a list of tuples of networkx graph
         # object and the corresponding output
         s_element = to_networkx(data=s[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
-                                 edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
         t_element = to_networkx(data=t[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
-                                 edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
 
         assert s_element.graph['theta'] == t_element.graph['theta'] and \
                s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
 
-        output.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, the_final_weights,
-                                              the_n_layers, the_choice, massive=massive))
+        output.append(
+            interference_prediction(s_element, the_s_params, t_element, the_t_params, the_final_weights, the_n_layers,
+                                    the_choice, massive=massive))
         truth.append(interference_truth(s_element.graph['theta']))
         angles.append(s_element.graph['theta'])
 
@@ -247,14 +248,14 @@ def interference_gauge_setting(s_loader, the_s_params, t_loader, the_t_params, t
     :param the_t_params: final params for the s-channel QGNN
     :param the_n_layers: numbers of layers of the quantum circuit
     :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
-    :param: massive: boolean value that indicates whether we're in massive or massless regime
+    :param massive: boolean value that indicates whether we're in massive or massless regime
     :return: output: predictions of the circuit
     :return: truth: theoretical values of the interference term
     :return: angles: list of the angle's values for each data
     """
 
-    gamma = np.linspace(0, 2*np.pi,75)
-    delta = np.linspace(0, 2*np.pi,75)
+    gamma = np.linspace(0, 2*np.pi, 75)
+    delta = np.linspace(0, 2*np.pi, 75)
 
     s_set = []
     t_set = []
@@ -289,8 +290,9 @@ def interference_gauge_setting(s_loader, the_s_params, t_loader, the_t_params, t
                 assert s_element.graph['theta'] == t_element.graph['theta'] and \
                        s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
 
-                prediction.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, [i, j],
-                                                          the_n_layers, the_choice, massive=massive))
+                prediction.append(
+                    interference_prediction(s_element, the_s_params, t_element, the_t_params, [i, j], the_n_layers,
+                                            the_choice, massive=massive))
 
                 truth = interference_truth(s_element.graph['theta'])
 

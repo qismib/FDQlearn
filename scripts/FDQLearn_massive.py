@@ -15,7 +15,7 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
     # Splitting q_dataset into training and validation set
     training_set, validation_set = train_test_split(q_dataset, train_size=0.8)
 
-    # y_stat, p_stat = standardization(training_set, validation_set)
+    y_stat, p_stat = standardization(training_set, validation_set)
 
     # Building DataLoaders for each set
     training_loader = DataLoader(training_set, batch_size=batch_size)
@@ -71,30 +71,30 @@ def main(n_layers, max_epoch, the_dataset_file: str, the_train_file: str, the_va
     np.savetxt(the_param_file, array_params)
     test_prediction(validation_loader, final_params, the_test_file, the_truth_file, n_layers, choice, massive=massive)
 
-    # the_bandwidth = np.array([the_bandwidth])
-    # np.savetxt(the_standardization_file, np.concatenate((y_stat, p_stat, the_bandwidth)))
+    the_bandwidth = np.array([the_bandwidth])
+    np.savetxt(the_standardization_file, np.concatenate((y_stat, p_stat, the_bandwidth)))
 
     return final_params
 
 
 # fixing the seeds:
-torch.manual_seed(12345)
-np.random.seed(12345)
+torch.manual_seed(57439)
+np.random.seed(57439)
 
 
-num_layers = 3
+num_layers = 5
 num_epoch = 100
 batch = 20
 elements = 750
 massive_regime = True
 
-csv_file = '../data/dataset/QED_data_e_annih_e_s_massive.csv'
-train_file = '../data/training_test_results/parametrized_s_massive_channel_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_s_massive_channel_val_loss.txt'
-test_pred_file = '../data/training_test_results/parametrized_s_massive_channel_predictions.txt'
-truth_file = '../data/training_test_results/parametrized_s_massive_channel_ground_truth.txt'
-final_params_file = '../data/interference/parametrized_channel_s_massive_final_params.txt'
-standardization_file = '../data/interference/parametrized_channel_s_massive_standardization.txt'
+csv_file = '../data/dataset/QED_data_e_annih_e_t_massive.csv'
+train_file = '../data/training_test_results/parametrized_t_massive_channel_train_loss.txt'
+val_file = '../data/training_test_results/parametrized_t_massive_channel_val_loss.txt'
+test_pred_file = '../data/training_test_results/parametrized_t_massive_channel_predictions.txt'
+truth_file = '../data/training_test_results/parametrized_t_massive_channel_ground_truth.txt'
+final_params_file = '../data/interference/parametrized_channel_t_massive_final_params.txt'
+standardization_file = '../data/interference/parametrized_channel_t_massive_standardization.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training

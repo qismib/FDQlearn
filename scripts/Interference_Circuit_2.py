@@ -8,7 +8,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 num_layers = [3, 5]
-elements = 50  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
+elements = 300  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
 epochs = 50
 massive_regime = False
 
@@ -49,11 +49,13 @@ print("i parametri iniziali sono:", init_params)
 # predictions, ground_truth, angles = interference_test(s_channel, s_params, t_channel, t_params, init_params,
                                                       # num_layers, feature_map, massive=massive_regime)
 
-# predictions, ground_truth, angles = one_data_training(s_channel, s_params, t_channel, t_params, epochs, num_layers,
-                                                      # feature_map, massive=massive_regime)
+predictions, ground_truth, angles = one_data_training(s_channel, s_params, t_channel, t_params, epochs, num_layers,
+                                                      feature_map, massive=massive_regime)
 
-predictions, ground_truth, angles, loss = interference_gauge_setting(s_channel, s_params, t_channel, t_params,
-                                                                     num_layers, feature_map, massive=massive_regime)
+# predictions, ground_truth, angles, loss = interference_gauge_setting(s_channel, s_params, t_channel, t_params,
+                                                                     # num_layers, feature_map, massive=massive_regime)
+
+print('i parametri finali sono:',init_params)
 
 predictions = [p.detach().numpy() for p in predictions]
 
@@ -66,6 +68,6 @@ plt.plot(angles, predictions, 'ro', label='circuit prediction')
 plt.legend(loc='upper right')
 plt.show()
 
-plt.plot(range(len(loss)), loss, 'ro', label='squared-error of the prediction')
-plt.legend(loc='upper right')
-plt.show()
+# plt.plot(range(len(loss)), loss, 'ro', label='squared-error of the prediction')
+# plt.legend(loc='upper right')
+# plt.show()

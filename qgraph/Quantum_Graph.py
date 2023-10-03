@@ -713,25 +713,30 @@ def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
 
     if the_choice == 'parametrized':
 
-        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
-        qml.PauliX(wires=6)
+        qml.ctrl(parametric_qgnn, control=6, control_values=0)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=0)((-1)*the_s_phase)
+        # qml.PauliX(wires=6)
         qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        # qml.PhaseShift((-1)*the_s_phase, wires=6)
+
 
     elif the_choice == 'unparametrized':
-        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
-        qml.PauliX(wires=6)
+        qml.ctrl(qgnn, control=6, control_values=0)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=0)((-1)*the_s_phase)
+        # qml.PauliX(wires=6)
         qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        # qml.PhaseShift((-1)*the_s_phase, wires=6)
+
 
     elif the_choice == 'fully_parametrized':
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
-        qml.PauliX(wires=6)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=0)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.ctrl(global_phase_operator, control=6, control_values=0)((-1)*the_s_phase)
+        # qml.PauliX(wires=6)
         qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
         qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        # qml.PhaseShift((-1)*the_s_phase, wires=6)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
