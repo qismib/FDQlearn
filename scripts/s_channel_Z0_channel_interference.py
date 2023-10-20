@@ -44,6 +44,8 @@ torch.manual_seed(68459)
 np.random.seed(68459)
 z_channel = FeynmanDiagramDataset(the_file_path=file2, the_n_elements=elements)
 
+p = s_channel[0][0]['p_norm'].numpy()
+
 s_channel = DataLoader(s_channel, batch_size=1)
 z_channel = DataLoader(z_channel, batch_size=1)
 
@@ -71,7 +73,7 @@ np.savetxt(interference_file, predictions)
 np.savetxt(angles_file, angles)
 
 x = np.linspace(0.5, np.pi, 1000)
-y = function(x)
+y = function(x, p)
 
 plt.plot(angles, predictions, 'ro', label='circuit prediction')
 plt.plot(x, y, label='theoretical result')
