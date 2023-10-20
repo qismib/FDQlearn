@@ -12,7 +12,7 @@ def interference(the_s_loader, s_params, the_t_loader, t_params, the_n_layers, t
     :param: the_s_loader: set of graphs representing all the s-channel diagrams
     :param: s_params: value of the final parameters for s-channel (after training)
     :param: the_t_loader: set of graphs representing all the t-channel diagrams
-    :param: t_params: value of the final parameters for channel t (after training)
+    :param: z_params: value of the final parameters for channel t (after training)
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
     :param: massive: boolean value that indicates whether we're in massive or massless regime
@@ -82,7 +82,7 @@ def matrix_squared(the_s_loader, s_params, the_t_loader, t_params, the_n_layers,
     :param: the_s_loader: set of graphs representing all the s-channel diagrams
     :param: s_params: value of the final parameters for s-channel (after training)
     :param: the_t_loader: set of graphs representing all the t-channel diagrams
-    :param: t_params: value of the final parameters for channel t (after training)
+    :param: z_params: value of the final parameters for channel t (after training)
     :param: the_layers: number of layers
     :param: the_choice: string that tells which feature map we want to use
     :param: massive: boolean value that indicates whether we're in massive or massless regime

@@ -3,6 +3,7 @@ import torch
 from qgraph import FeynmanDiagramDataset, global_phase
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_networkx
+import matplotlib.pyplot as plt
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -32,7 +33,7 @@ torch.manual_seed(68459)
 np.random.seed(68459)
 # t_stat = torch.from_numpy(np.loadtxt('../data/interference/parametrized_channel_t_standardization.txt'))
 t_channel = FeynmanDiagramDataset(the_file_path=file2)
-# standard_scaling(t_channel, t_stat[0], t_stat[1], t_stat[2], t_stat[3], t_stat[4])
+# standard_scaling(z_channel, t_stat[0], t_stat[1], t_stat[2], t_stat[3], t_stat[4])
 
 s_channel = DataLoader(s_channel, batch_size=1)
 t_channel = DataLoader(t_channel, batch_size=1)
@@ -51,3 +52,11 @@ for s, t in zip(s_channel, t_channel):
 
 np.savetxt(s_phase_file, s_phases)
 np.savetxt(t_phase_file, t_phases)
+
+plt.plot(s_phases, 'ro', label="global phase for s-channel")
+plt.grid()
+plt.show()
+
+plt.plot(t_phases, 'bs', label="global phase for t-channel")
+plt.grid
+plt.show()

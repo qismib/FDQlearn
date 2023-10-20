@@ -3,32 +3,35 @@ import matplotlib.pyplot as plt
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-angles_e_e_s = np.loadtxt('../data/training_test_results/angles_e_e_s.txt')
-angles_e_e_t = np.loadtxt('../data/training_test_results/angles_e_e_t.txt')
-truth_e_e_s = np.loadtxt('../data/training_test_results/truth_e_e_s.txt')
-truth_e_e_t = np.loadtxt('../data/training_test_results/truth_e_e_t.txt')
-predictions_e_e_s = np.loadtxt('../data/training_test_results/outcomes_e_e_s.txt')
-predictions_e_e_t = np.loadtxt('../data/training_test_results/outcomes_e_e_t.txt')
-train_loss = np.loadtxt('../data/training_test_results/parametrized_total_train_loss.txt')
-val_loss = np.loadtxt('../data/training_test_results/parametrized_total_val_loss.txt')
-val_s_loss = val_loss[:len(val_loss)//2]
-val_t_loss = val_loss[len(val_loss)//2:]
+train_file = ['../data/training_test_results/parametrized_s_channel_train_loss_2l.txt',
+              '../data/training_test_results/parametrized_s_channel_train_loss_3l.txt',
+              '../data/training_test_results/parametrized_s_channel_train_loss_4l.txt',
+              '../data/training_test_results/parametrized_s_channel_train_loss_5l.txt']
 
 
-epochs = range(len(train_loss))
+val_file = ['../data/training_test_results/parametrized_s_channel_val_loss_2l.txt',
+            '../data/training_test_results/parametrized_s_channel_val_loss_3l.txt',
+            '../data/training_test_results/parametrized_s_channel_val_loss_4l.txt',
+            '../data/training_test_results/parametrized_s_channel_val_loss_5l.txt']
 
-plt.figure(1)
-plt.plot(epochs, train_loss, label='train loss')
-plt.plot(epochs, val_s_loss, label='validation s-channel loss')
-plt.plot(epochs, val_t_loss, label='validation t-channel loss')
+num_layers = [2, 3, 4, 5]
+
+training_loss = [0]*len(num_layers)
+validation_loss = [0]*len(num_layers)
+
+for i in range(len(num_layers)):
+    training_loss[i] = np.loadtxt(train_file[i])
+    plt.plot(range(len(training_loss[i])), training_loss[i], label=str(i+1)+' layers training loss')
+    # plt.yscale('log')
+    plt.title('Training loss for different depths')
+    plt.legend(loc='upper right')
 plt.show()
 
-plt.figure(2)
-plt.plot(angles_e_e_s, truth_e_e_s, 'ro')
-plt.plot(angles_e_e_s, predictions_e_e_s, 'bs')
-plt.show()
 
-plt.figure(3)
-plt.plot(angles_e_e_t, truth_e_e_t, 'ro')
-plt.plot(angles_e_e_t, predictions_e_e_t, 'bs')
+for i in range(len(num_layers)):
+    validation_loss[i] = np.loadtxt(val_file[i])
+    plt.plot(range(len(validation_loss[i])), validation_loss[i], label=str(i+1) + ' layers validation loss')
+    # plt.yscale('log')
+    plt.title('Validation loss for different depths')
+    plt.legend(loc='upper right')
 plt.show()

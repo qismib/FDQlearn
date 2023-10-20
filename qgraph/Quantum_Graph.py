@@ -135,7 +135,7 @@ def Kinetic_layer(the_G, massive: bool = False):
 
     else:
         for the_node in the_G.nodes:
-            qml.U1(the_G.graph['theta'], wires=the_node) # for a circuit without momentum
+            qml.U1(the_G.graph['theta'], wires=the_node)  # for a circuit without momentum
 
 
 ########################################################################################################################
@@ -596,11 +596,6 @@ def expect_value(the_G, the_n_layers, the_params, the_choice, massive: bool = Fa
         print("Error, the_choice must be either 'parametrized', 'unparametrized', 'fully_parametrized' or 'fully_connected'")
         return 0
 
-    # my_operator = qml.PauliZ(0)
-    # my_operator = bhabha_operator(0, the_observable_params[0], the_observable_params[1]) #this operator is the one we want to define for the interference circuit
-    # output = qml.expval(my_operator)
-
-    # New way to define our customized observable
     output = qml.probs(wires=[0])
 
     return output
@@ -614,8 +609,10 @@ def expect_value(the_G, the_n_layers, the_params, the_choice, massive: bool = Fa
 
 """
 Circuit that extract the squared total matrix element
-of Bhabha scattering (generalizable to other scattering processes)
-
+of Bhabha scattering (generalizable to other scattering processes).
+Can't be used nowadays because we didn't manage to find a single quantum graph neural network
+that's able to learn different Feynman diagrams. Especially we need a single trainable observable O
+instead of 2.
 """
 dev2 = qml.device("default.qubit", wires=7)
 
@@ -646,24 +643,24 @@ def total_matrix_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
 
     if the_choice == 'parametrized':
         qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
+        qml.PhaseShift(the_s_phase, wires=6)
         qml.PauliX(wires=6)
         qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        qml.PhaseShift(the_t_phase, wires=6)
 
     elif the_choice == 'unparametrized':
         qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
+        qml.PhaseShift(the_s_phase, wires=6)
         qml.PauliX(wires=6)
         qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        qml.PhaseShift(the_t_phase, wires=6)
 
     elif the_choice == 'fully_parametrized':
         qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers, the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_s_phase)
+        qml.PhaseShift(the_s_phase, wires=6)
         qml.PauliX(wires=6)
         qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers, the_t_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
+        qml.PhaseShift(the_t_phase, wires=6)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")
@@ -713,30 +710,25 @@ def interference_circuit(the_s_channel, the_s_params, the_s_phase, the_t_channel
 
     if the_choice == 'parametrized':
 
-        qml.ctrl(parametric_qgnn, control=6, control_values=0)(the_s_channel, the_layers[0], the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=0)((-1)*the_s_phase)
-        # qml.PauliX(wires=6)
+        qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.PhaseShift(the_s_phase, wires=6)
+        qml.PauliX(wires=6)
         qml.ctrl(parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
-        # qml.PhaseShift((-1)*the_s_phase, wires=6)
-
+        qml.PhaseShift(the_t_phase, wires=6)
 
     elif the_choice == 'unparametrized':
-        qml.ctrl(qgnn, control=6, control_values=0)(the_s_channel, the_layers[0], the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=0)((-1)*the_s_phase)
-        # qml.PauliX(wires=6)
+        qml.ctrl(qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.PhaseShift(the_s_phase, wires=6)
+        qml.PauliX(wires=6)
         qml.ctrl(qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
-        # qml.PhaseShift((-1)*the_s_phase, wires=6)
-
+        qml.PhaseShift(the_t_phase, wires=6)
 
     elif the_choice == 'fully_parametrized':
-        qml.ctrl(fully_parametric_qgnn, control=6, control_values=0)(the_s_channel, the_layers[0], the_s_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=0)((-1)*the_s_phase)
-        # qml.PauliX(wires=6)
+        qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_s_channel, the_layers[0], the_s_params, massive=massive)
+        qml.PhaseShift(the_s_phase, wires=6)
+        qml.PauliX(wires=6)
         qml.ctrl(fully_parametric_qgnn, control=6, control_values=1)(the_t_channel, the_layers[1], the_t_params, massive=massive)
-        qml.ctrl(global_phase_operator, control=6, control_values=1)((-1)*the_t_phase)
-        # qml.PhaseShift((-1)*the_s_phase, wires=6)
+        qml.PhaseShift(the_t_phase, wires=6)
 
     else:
         print("Error, the_choice must be either 'parametrized', 'unparametrized' or 'fully_parametrized'")

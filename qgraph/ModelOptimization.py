@@ -5,6 +5,7 @@ from torch import optim
 from torch_geometric.utils import to_networkx
 from qgraph import expect_value
 import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 
 
 def predict(the_dataset, the_weights, the_n_layers, the_choice: str, massive: bool = False):
@@ -98,10 +99,10 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
         the_val = validation_qgnn(the_validation_loader, the_weights, the_choice, the_n_layers, massive=massive)
         validation_loss.append(the_val)
 
-        if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
-            the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
-            print('the training process stopped at epoch number ', epoch)
-            break
+        # if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
+            # the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
+            # print('the training process stopped at epoch number ', epoch)
+            # break
 
         if epoch % 5 == 0:
             res = [epoch, training_loss, the_val, elapsed]
@@ -111,15 +112,7 @@ def train_qgnn(the_training_loader, the_validation_loader, the_init_weights, the
     np.savetxt(the_train_file, epoch_loss)
     np.savetxt(the_val_file, validation_loss)
 
-    # plotting the loss value for each epoch
-    plt.plot(range(the_n_epochs), epoch_loss, label='training')
-    plt.plot(range(the_n_epochs), validation_loss, label='validation')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.legend(loc="upper right")
-    plt.show()
-
-    return the_weights
+    return the_weights, epoch_loss, validation_loss
 
 
 def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validation_t_loader, the_init_weights, the_n_epochs, the_train_file: str,
@@ -252,7 +245,7 @@ function for predicting and plotting the test_set
 def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3,
                     the_choice: str = 'parametrized', massive: bool = False):
     """
-    this function compute the predicted outputs of unknonw datas (testset) and compare them
+    this function compute the predicted outputs of unknown datas (testset) and compare them
     to true output of them with a plot
     :param: the_test_loader: DataLoader object of the test set
     :param: the_params: parameters to insert in the quantum circuit
@@ -276,17 +269,31 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     # convert each element from torch tensor into numpy array for the plot
     truth = [i[1].detach().numpy() for i in targets]  # here I define a list of the true values
     angles = [i[0].graph['theta'] for i in targets]  # here I build a list of scattering angles values
+    momentum = [i[0].graph['p_norm'] for i in targets]
     targets = predict(targets, the_params, the_n_layers, the_choice, massive=massive)
     targets = [i.detach().numpy() for i in targets]  # here I build a list of predicted outputs
 
     # plotting lines
     plt.plot(angles, targets, 'ro', label='predictions')
     plt.plot(angles, truth, 'bs', label='ground truth')
+    plt.title('|M|^2 prediction over the test set')
     plt.xlabel('Scattering Angle (rad)')
     plt.ylabel('Squared Matrix Element')
     plt.legend(loc='upper right')
     plt.grid(True)
     plt.show()
+    if massive is True:
+        X, Y = np.meshgrid(angles, momentum)
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        ax.scatter3D(angles, momentum, targets, color='red')
+        ax.scatter3D(angles, momentum, truth, color='blue')
+        ax.set_title('Squared Matrix Element')
+        ax.set_xlabel('Scattering Angle (rad)', fontsize=12)
+        ax.set_ylabel('Momentum of the particles', fontsize=12)
+        ax.set_zlabel('Squared Matrix Element', fontsize=12)
+        plt.show()
+
     np.savetxt(the_truth_file, truth)
     np.savetxt(the_test_file, targets)
 
