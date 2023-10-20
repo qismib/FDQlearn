@@ -18,15 +18,15 @@ csv_file = '../data/dataset/QED_data_e_annih_e_t.csv'
 
 q_dataset = FeynmanDiagramDataset(the_file_path=csv_file, the_n_elements=elements)
 
-train_file = '../data/training_test_results/t_channel/parametrized_t_channel_train_loss_3l.txt'
+train_file = '../data/training_test_results/t_channel/parametrized_t_channel_train_loss_5l.txt'
 
-val_file = '../data/training_test_results/t_channel/parametrized_t_channel_val_loss_3l.txt'
+val_file = '../data/training_test_results/t_channel/parametrized_t_channel_val_loss_5l.txt'
 
-test_pred_file = '../data/training_test_results/t_channel/parametrized_t_channel_predictions_3l.txt'
+test_pred_file = '../data/training_test_results/t_channel/parametrized_t_channel_predictions_5l.txt'
 
-truth_file = '../data/training_test_results/t_channel/parametrized_t_channel_ground_truth_3l.txt'
+truth_file = '../data/training_test_results/t_channel/parametrized_t_channel_ground_truth_5l.txt'
 
-final_params_file = '../data/interference/parametrized_channel_t_final_params_3l.txt'
+final_params_file = '../data/interference/parametrized_channel_t_final_params_5l.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training

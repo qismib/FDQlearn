@@ -30,6 +30,7 @@ feature_map = 'parametrized'  # Must be either "parametrized" or "unparametrized
 file1 = '../data/dataset/QED_data_e_annih_e_s.csv'
 file2 = '../data/dataset/QED_data_e_annih_e_Z.csv'
 interference_file = '../data/interference/s_Z0_interference_outcomes.txt'
+angles_file = '../data/interference/s_Z0_angles.txt'
 
 s_array = np.loadtxt('../data/interference/parametrized_channel_s_final_params_3l.txt')
 s_params = torch.tensor(s_array, dtype=torch.float, requires_grad=False)
@@ -66,6 +67,8 @@ predictions, angles = one_data_training(function, s_channel, s_params, z_channel
 print('i parametri finali sono:', init_params)
 
 predictions = [p.detach().numpy() for p in predictions]
+np.savetxt(interference_file, predictions)
+np.savetxt(angles_file, angles)
 
 x = np.linspace(0.5, np.pi, 1000)
 y = function(x)

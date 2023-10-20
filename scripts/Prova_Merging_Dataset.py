@@ -110,8 +110,8 @@ elements = 750
 massive_regime = False
 
 file = '../data/dataset/QED_data_qed.csv'
-train_file = '../data/training_test_results/parametrized_total_train_loss.txt'
-val_file = '../data/training_test_results/parametrized_total_val_loss.txt'
+train_file = '../data/training_test_results/merged_trianing/parametrized_total_train_loss.txt'
+val_file = '../data/training_test_results/merged_trianing/parametrized_total_val_loss.txt'
 test_pred_file = '../data/interference/parametrized_total_final_outcome.txt'
 test_param_file = '../data/interference/parametrized_total_final_params.txt'
 
