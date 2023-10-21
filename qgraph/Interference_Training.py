@@ -154,9 +154,9 @@ def one_data_training(true_fun, s_loader, the_s_params, t_loader, the_t_params, 
         for i in range(fold):
             starting_time = time.time()
 
-            the_weights = 2*np.pi*torch.randn(2, dtype=torch.float)
+            the_weights = 0.01*torch.randn(2, dtype=torch.float)
             the_weights.requires_grad = True
-            opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+            opt = optim.Adam([the_weights], lr=1e-1)  # initialization of the optimizer to use
             epoch_loss = []
             convergence = the_n_epochs
             training_loss = 0
