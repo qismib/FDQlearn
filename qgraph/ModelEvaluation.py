@@ -150,6 +150,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
 
     test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, n_layers, choice, massive)
 
+    print('----------------------------------------------------------------------')
+
     init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
     init_params.requires_grad = True
     cross_loader = DataLoader(cross_set, batch_size=batch_size)

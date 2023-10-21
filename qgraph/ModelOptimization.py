@@ -40,6 +40,19 @@ def get_mse(predictions, ground_truth):
     return sum([(predictions[i] - torch.tensor(ground_truth[i], dtype=torch.float))**2 for i in range(n)])
 
 
+def relative_error(predictions, ground_truth):
+    """
+    :param predictions: list of predictions of the QGNN
+    :param  ground_truth: list of true labels
+    :return: rel_error: mean relative error
+    """
+    n = len(predictions)
+    assert len(ground_truth) == n, "The number of predictions and true labels is not equal"
+    error = np.array([np.abs(predictions[i] - ground_truth[i])/predictions[i] for i in range(n)])
+    error = np.mean(error)
+    return error
+
+
 """
 here the_training_set must be a list tuple (graph, output)!!!!!
 """
@@ -272,6 +285,9 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     momentum = [i[0].graph['p_norm'] for i in targets]
     targets = predict(targets, the_params, the_n_layers, the_choice, massive=massive)
     targets = [i.detach().numpy() for i in targets]  # here I build a list of predicted outputs
+
+    rel_error = relative_error(targets, truth)
+    print('the relative error per element of the test set is:', rel_error)
 
     # plotting lines
     plt.plot(angles, targets, 'ro', label='predictions')
