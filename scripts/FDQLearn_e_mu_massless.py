@@ -7,26 +7,26 @@ from qgraph import FeynmanDiagramDataset, model_evaluation
 torch.manual_seed(12345)
 np.random.seed(12345)
 
-num_layers = 5
+num_layers = 3
 k_fold = 5
 num_epoch = 50
 batch = 20
 elements = 1000
-massive_regime = True
+massive_regime = False
 
-csv_file = '../data/dataset/QED_data_e_annih_mu_massive.csv'
+csv_file = '../data/dataset/QED_data_e_annih_mu.csv'
 
 q_dataset = FeynmanDiagramDataset(the_file_path=csv_file, the_n_elements=elements)
 
-train_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_train_loss_massive_3l.txt'
+train_file = '../data/training_test_results/e_mu/parametrized_e_mu_train_loss_3l.txt'
 
-val_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_val_loss_massive_3l.txt'
+val_file = '../data/training_test_results/e_mu/parametrized_e_mu_val_loss_3l.txt'
 
-test_pred_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_predictions_massive_3l.txt'
+test_pred_file = '../data/training_test_results/e_mu/parametrized_e_mu_predictions_3l.txt'
 
-truth_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_truth_massive_3l.txt'
+truth_file = '../data/training_test_results/e_mu/parametrized_e_mu_ground_truth_3l.txt'
 
-final_params_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_final_params_massive_3l.txt'
+final_params_file = '../data/interference/parametrized_e_mu_final_params_3l.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
