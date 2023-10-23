@@ -1,7 +1,6 @@
 from pennylane import numpy as np
 import torch
-from qgraph import FeynmanDiagramDataset
-from qgraph import train_qgnn, test_prediction
+from qgraph import train_qgnn, test_prediction, standardization
 from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -54,7 +53,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
         total_num_params = n_layers * (m + n + kinetic_num) + 3 * l + obs_params # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
 
     # Splitting the entire dataset into training set and test set
-    test_set, cross_set = train_test_split(dataset, train_size=0.8, shuffle=True)
+    cross_set, test_set = train_test_split(dataset, train_size=0.8, shuffle=True)
+    print(len(test_set))
     test_loader = DataLoader(test_set)
 
     dim_fold = len(cross_set)//fold
@@ -62,6 +62,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
     train_loss = [0]*fold
     val_loss = [0]*fold
     final_params = [0]*fold
+    train_set = []
 
     # doing a k-fold cross validation
     for i in range(fold):
@@ -72,6 +73,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
             if elem not in validation_set:
                 training_set.append(elem)
 
+        train_set.append(training_set)
+
         # Building DataLoaders for each set
         training_loader = DataLoader(training_set, batch_size=batch_size)
         validation_loader = DataLoader(validation_set)
@@ -80,8 +83,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
         init_params.requires_grad = True
         print(init_params)
 
-        final_params[i], train_loss[i], val_loss[i] = train_qgnn(training_loader, validation_loader, init_params, max_epoch, the_train_file,
-                                                                 the_val_file, n_layers, choice, massive=massive)
+        final_params[i], train_loss[i], val_loss[i] = train_qgnn(training_loader, validation_loader, init_params,
+                                                                 max_epoch, n_layers, choice, massive=massive)
 
         print("finished the ", (i+1), " cross validation process")
         print('---------------------------------------------------------------------')
@@ -155,8 +158,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
     init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
     init_params.requires_grad = True
     cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, the_train_file, the_val_file,
-                                   n_layers, choice, massive=massive)
+    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
     test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
 
     # test_params = final_params[index]
