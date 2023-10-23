@@ -54,7 +54,6 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
 
     # Splitting the entire dataset into training set and test set
     cross_set, test_set = train_test_split(dataset, train_size=0.8, shuffle=True)
-    print(len(test_set))
     test_loader = DataLoader(test_set)
 
     dim_fold = len(cross_set)//fold
