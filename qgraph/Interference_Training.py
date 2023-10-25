@@ -98,13 +98,13 @@ def training_interference(true_fun, s_loader, the_s_params, t_loader, the_t_para
             print("Epoch: {:2d} | Training loss: {:3f} | Elapsed Time per Epoch: {:3f}".format(*res))
 
     # plotting the loss value for each epoch
-    plt.plot(range(the_n_epochs), epoch_loss, label='training')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.legend(loc="upper right")
-    plt.show()
+    # plt.plot(range(the_n_epochs), epoch_loss, label='training')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.legend(loc="upper right")
+    # plt.show()
 
-    return the_weights
+    return the_weights, epoch_loss
 
 
 def one_data_training(true_fun, s_loader, the_s_params, t_loader, the_t_params, the_n_epochs: int = 100,

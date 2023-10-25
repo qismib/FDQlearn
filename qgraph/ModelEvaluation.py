@@ -54,7 +54,6 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
 
     # Splitting the entire dataset into training set and test set
     cross_set, test_set = train_test_split(dataset, train_size=0.8, shuffle=True)
-    test_loader = DataLoader(test_set)
 
     dim_fold = len(cross_set)//fold
 
@@ -73,6 +72,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
                 training_set.append(elem)
 
         train_set.append(training_set)
+
+        _, _ = standardization(training_set, validation_set)
 
         # Building DataLoaders for each set
         training_loader = DataLoader(training_set, batch_size=batch_size)
@@ -142,23 +143,26 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
     plt.title('Loss per epoch - validation set ')
     plt.show()
 
-    final_validation = []
-    for i in val_loss:
-        final_validation.append(i[-1])
-    optimal = min(final_validation)
-    index = final_validation.index(optimal)
+    # final_validation = []
+    # for i in val_loss:
+    #    final_validation.append(i[-1])
+    # optimal = min(final_validation)
+    # index = final_validation.index(optimal)
 
-    print(final_params[index])
+    # print(final_params[index])
 
-    test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, n_layers, choice, massive)
+    # test_loader = DataLoader(test_set)
+    # test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, n_layers, choice, massive)
 
     print('----------------------------------------------------------------------')
 
-    # init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
-    # init_params.requires_grad = True
-    # cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    # test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
-    # test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
+    _, _ = standardization(cross_set, test_set)
+    test_loader = DataLoader(test_set)
+    init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
+    init_params.requires_grad = True
+    cross_loader = DataLoader(cross_set, batch_size=batch_size)
+    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
+    test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
 
-    test_params = final_params[index]
+    # test_params = final_params[index]
     return test_params
