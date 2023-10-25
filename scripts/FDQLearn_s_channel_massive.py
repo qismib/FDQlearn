@@ -9,10 +9,11 @@ np.random.seed(12345)
 
 num_layers = 3
 k_fold = 5
-num_epoch = 50
+num_epoch = 30
 batch = 20
 elements = 1000
 massive_regime = True
+
 
 csv_file = '../data/dataset/QED_data_e_annih_e_s_massive.csv'
 

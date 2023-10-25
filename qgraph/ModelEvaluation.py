@@ -154,11 +154,11 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
 
     print('----------------------------------------------------------------------')
 
-    init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
-    init_params.requires_grad = True
-    cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
-    test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
+    # init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
+    # init_params.requires_grad = True
+    # cross_loader = DataLoader(cross_set, batch_size=batch_size)
+    # test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
+    # test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
 
-    # test_params = final_params[index]
+    test_params = final_params[index]
     return test_params

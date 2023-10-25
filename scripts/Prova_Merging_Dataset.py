@@ -65,6 +65,11 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
         obs_params = 2  # number of parameters of the observable
         total_num_params = n_layers * (m + n + kinetic_num) + 3 * l + obs_params # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
 
+    elif choice == 'fully_connected':
+        l = len(q_dataset.dataset[0][0].edges[(0, 2)])  # number of parameters for the feature map
+        obs_params = 2  # number of parameters of the observable
+        total_num_params = n_layers * (n * (n - 1) // 2 + n + kinetic_num) + l + obs_params # KINETIC_NUM = 1 IF MASSLESS REGIME, KINETIC_NUM = 2 IF MASSIVE REGIME
+
     # Splitting q_dataset into training and validation set
     cross_set, test_set = train_test_split(q_dataset, train_size=0.8)
 
@@ -93,11 +98,11 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
         validation_s_set = []
         validation_t_set = []
-        for i in validation_set:
-            if i[0]['scattering'] == 'e_e_s':
-                validation_s_set.append(i)
-            elif i[0]['scattering'] == 'e_e_t':
-                validation_t_set.append(i)
+        for v_elem in validation_set:
+            if v_elem[0]['scattering'] == 'e_e_s':
+                validation_s_set.append(v_elem)
+            elif v_elem[0]['scattering'] == 'e_e_t':
+                validation_t_set.append(v_elem)
 
         # Building DataLoaders for each set
         training_loader = DataLoader(training_set, batch_size=batch_size)
@@ -207,8 +212,8 @@ np.random.seed(12345)
 
 
 num_layers = 3
-num_epoch = 100
-kfold = 10
+num_epoch = 50
+kfold = 5
 batch = 20
 elements = 1500
 massive_regime = False

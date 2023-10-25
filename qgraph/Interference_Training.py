@@ -240,9 +240,8 @@ def interference_test(s_test_loader, the_s_params, t_test_loader, the_t_params, 
         assert s_element.graph['theta'] == t_element.graph['theta'] and \
                s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
 
-        output.append(
-            interference_prediction(s_element, the_s_params, t_element, the_t_params, the_final_weights, the_n_layers,
-                                    the_choice, massive=massive))
+        output.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, the_final_weights,
+                                              the_n_layers, the_choice, massive=massive))
         angles.append(s_element.graph['theta'])
 
     return output, angles

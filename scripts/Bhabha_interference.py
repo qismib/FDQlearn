@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 import torch
 from qgraph import FeynmanDiagramDataset, training_interference, interference_test, one_data_training
-from qgraph import interference_gauge_setting
+from qgraph import interference_gauge_setting, relative_error
 from torch_geometric.loader import DataLoader
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -69,6 +69,10 @@ np.savetxt(angle_file, angles)
 
 x = np.linspace(0.5, np.pi, 1000)
 y = function(x, p)
+
+truth = function(angles, p)
+rel_err = relative_error(predictions, truth)
+print(rel_err)
 
 plt.plot(angles, predictions, 'ro', label='circuit prediction')
 plt.plot(x, y, label='theoretical result')
