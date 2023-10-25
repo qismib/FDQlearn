@@ -14,7 +14,7 @@ def function(theta, p):
 
 
 num_layers = [3, 5]
-elements = 100  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
+elements = 150  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
 epochs = 150
 kfold = 5
 massive_regime = False
@@ -30,7 +30,7 @@ loss_file = '../data/interference/bhabha_interference_loss.txt'
 
 s_array = np.loadtxt('../data/interference/parametrized_s_channel_final_params_3l.txt')
 s_params = torch.tensor(s_array, dtype=torch.float, requires_grad=False)
-t_array = np.loadtxt('../data/interference/parametrized_t_channel_final_params_3l.txt')
+t_array = np.loadtxt('../data/interference/parametrized_channel_t_final_params_3l.txt')
 t_params = torch.tensor(t_array, dtype=torch.float, requires_grad=False)
 
 torch.manual_seed(68459)
