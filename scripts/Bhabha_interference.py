@@ -28,7 +28,7 @@ interference_file = '../data/interference/bhabha_interference_outcomes.txt'
 angle_file = '../data/interference/bhabha_angles.txt'
 loss_file = '../data/interference/bhabha_interference_loss.txt'
 
-s_array = np.loadtxt('../data/interference/parametrized_s_channel_final_params_3l.txt')
+s_array = np.loadtxt('../data/interference/parametrized_channel_s_final_params_3l.txt')
 s_params = torch.tensor(s_array, dtype=torch.float, requires_grad=False)
 t_array = np.loadtxt('../data/interference/parametrized_channel_t_final_params_3l.txt')
 t_params = torch.tensor(t_array, dtype=torch.float, requires_grad=False)
