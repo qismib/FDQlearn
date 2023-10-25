@@ -13,7 +13,7 @@ def function(theta, p):
     return q_e**4*(1+np.cos(theta))**2/(2*(1-np.cos(theta)))
 
 
-num_layers = [3, 5]
+num_layers = [3, 3]
 elements = 150  # number of elements to study, I have to put it in lines 26 and 31 in FeynmanDiagramDataset
 epochs = 150
 kfold = 5
