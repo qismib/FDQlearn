@@ -18,15 +18,15 @@ csv_file = '../data/dataset/QED_data_e_annih_e_t_massive.csv'
 
 q_dataset = FeynmanDiagramDataset(the_file_path=csv_file, the_n_elements=elements)
 
-train_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_loss_massive_5l.txt'
+train_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_loss_massive_3l.txt'
 
-val_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_loss_massive_5l.txt'
+val_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_loss_massive_3l.txt'
 
-test_pred_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_predictions_massive_5l.txt'
+test_pred_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_predictions_massive_3l.txt'
 
-truth_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_ground_truth_massive_5l.txt'
+truth_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_ground_truth_massive_3l.txt'
 
-final_params_file = '../data/training_test_results/t_channel_massive/parametrized_channel_t_final_params_massive_5l.txt'
+final_params_file = '../data/training_test_results/t_channel_massive/parametrized_channel_t_final_params_massive_3l.txt'
 
 train_std_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_std_3l_massive.txt'
 
