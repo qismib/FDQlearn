@@ -50,15 +50,15 @@ init_params.requires_grad = True
 
 print("i parametri iniziali sono:", init_params)
 
-# init_params, int_loss = training_interference(function, s_channel, s_params, t_channel, t_params, init_params, epochs, num_layers,
-                                    # feature_map, massive=massive_regime)
-# np.savetxt(loss_file, int_loss)
+init_params, int_loss = training_interference(function, s_channel, s_params, t_channel, t_params, init_params, epochs, num_layers,
+                                              feature_map, massive=massive_regime)
+np.savetxt(loss_file, int_loss)
 
-# predictions, angles = interference_test(s_channel, s_params, t_channel, t_params, init_params,
-                                        # num_layers, feature_map, massive=massive_regime)
+predictions, angles = interference_test(s_channel, s_params, t_channel, t_params, init_params,
+                                        num_layers, feature_map, massive=massive_regime)
 
-predictions, angles = one_data_training(function, s_channel, s_params, t_channel, t_params, epochs, num_layers,
-                                        kfold, feature_map, massive=massive_regime)
+# predictions, angles = one_data_training(function, s_channel, s_params, t_channel, t_params, epochs, num_layers,
+                                        # kfold, feature_map, massive=massive_regime)
 
 # predictions, angles, loss = interference_gauge_setting(function, s_channel, s_params, t_channel, t_params,
                                                        # num_layers, feature_map, massive=massive_regime)
