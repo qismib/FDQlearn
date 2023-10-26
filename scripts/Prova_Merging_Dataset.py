@@ -231,10 +231,10 @@ np.random.seed(12345)
 
 
 num_layers = 3
-num_epoch = 10
-kfold = 2
+num_epoch = 50
+kfold = 5
 batch = 20
-elements = 50
+elements = 1000
 massive_regime = False
 
 file = '../data/dataset/QED_data_qed.csv'
