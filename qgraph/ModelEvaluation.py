@@ -160,12 +160,12 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
 
     # _, _ = standardization(cross_set, test_set)
     # test_loader = DataLoader(test_set)
-    cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
-    init_params.requires_grad = True
-    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
-    test_prediction(test_loader, test_params, the_test_file, the_truth_file, the_angle_file, the_momentum_file,
-                    n_layers, choice, massive)
+    # cross_loader = DataLoader(cross_set, batch_size=batch_size)
+    # init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
+    # init_params.requires_grad = True
+    # test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
+    # test_prediction(test_loader, test_params, the_test_file, the_truth_file, the_angle_file, the_momentum_file,
+    #                n_layers, choice, massive)
 
     test_params = final_params[index]
     return test_params
