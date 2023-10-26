@@ -34,8 +34,6 @@ predictions = np.loadtxt(interference_file)
 # loss = np.loadtxt(loss_file)
 
 truth = function(angles, p)
-rel_err = relative_error(predictions, truth)
-print(rel_err)
 
 plt.plot(angles, predictions, 'ro', label='circuit prediction')
 plt.plot(x, y, label='theoretical result')
