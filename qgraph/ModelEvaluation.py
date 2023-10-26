@@ -8,8 +8,8 @@ import random
 
 
 def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_train_std_file: str, the_val_file: str,
-                     the_val_std_file: str, the_test_file: str, the_truth_file: str, the_angle_file: str, choice: str, batch_size=20,
-                     fold: int = 5, massive: bool = False):
+                     the_val_std_file: str, the_test_file: str, the_truth_file: str, the_angle_file: str, the_momentum_file: str,
+                     choice: str, batch_size=20, fold: int = 5, massive: bool = False):
 
     """
     CALCULATING THE NUMBER OF PARAMETERS I HAVE TO DEFINE FOR THE QGNN
@@ -61,7 +61,6 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
     train_loss = [0]*fold
     val_loss = [0]*fold
     final_params = [0]*fold
-    train_set = []
 
     # doing a k-fold cross validation
     for i in range(fold):
@@ -71,8 +70,6 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
         for elem in cross_set:
             if elem not in validation_set:
                 training_set.append(elem)
-
-        train_set.append(training_set)
 
         _, _ = standardization(training_set, validation_set)
 
@@ -154,18 +151,21 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
 
     print(final_params[index])
 
+    # _, _ = standardization(cross_set, test_set)
     test_loader = DataLoader(test_set)
-    test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, n_layers, choice, massive)
+    test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, the_angle_file, the_momentum_file,
+                    n_layers, choice, massive)
 
     print('----------------------------------------------------------------------')
 
-    # _, _ = standardization(cross_set, test_set)
-    # test_loader = DataLoader(test_set)
-    # init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
-    # init_params.requires_grad = True
-    # cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    # test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
-    # test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
+    #_, _ = standardization(cross_set, test_set)
+    #test_loader = DataLoader(test_set)
+    #init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
+    #init_params.requires_grad = True
+    #cross_loader = DataLoader(cross_set, batch_size=batch_size)
+    #test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
+    #test_prediction(test_loader, test_params, the_test_file, the_truth_file, the_angle_file, the_momentum_file,
+    #                n_layers, choice, massive)
 
     test_params = final_params[index]
     return test_params
