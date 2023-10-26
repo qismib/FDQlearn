@@ -105,7 +105,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
     cross_train_loss = np.array(cross_train_loss)
     cross_train_loss_std = np.array(cross_train_loss_std)
 
-    print('average loss after the training process:', cross_train_loss[-1]/batch_size, ' +- ', cross_train_loss_std[-1]/batch_size)
+    print('average loss per element after the training process:', cross_train_loss[-1]/batch_size, ' +- ', cross_train_loss_std[-1]/batch_size)
 
     cross_val_loss = []
     cross_val_loss_std = []
@@ -122,7 +122,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
     cross_val_loss = np.array(cross_val_loss)
     cross_val_loss_std = np.array(cross_val_loss_std)
 
-    print('average validation loss at the end of the training:', cross_val_loss[-1], ' +- ', cross_val_loss_std[-1])
+    print('average validation loss per element at the end of the training:', cross_val_loss[-1]/len(validation_set), ' +- ', cross_val_loss_std[-1]/len(validation_set))
 
     # saving the loss value for each epoch
     np.savetxt(the_train_file, cross_train_loss)
