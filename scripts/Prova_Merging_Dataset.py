@@ -241,7 +241,6 @@ file = '../data/dataset/QED_data_qed.csv'
 train_file = '../data/training_test_results/merged_training/parametrized_total_train_loss.txt'
 val_s_file = '../data/training_test_results/merged_training/parametrized_total_val_s_loss.txt'
 val_t_file = '../data/training_test_results/merged_training/parametrized_total_val_t_loss.txt'
-test_pred_file = '../data/interference/parametrized_total_final_outcome.txt'
 test_param_file = '../data/interference/parametrized_total_final_params.txt'
 
 
