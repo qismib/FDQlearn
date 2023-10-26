@@ -199,7 +199,7 @@ def merged_train_qgnn(the_training_loader, the_validation_s_loader, the_validati
     # plt.legend(loc="upper right")
     # plt.show()
 
-    return the_weights, training_loss, validation_s_loss, validation_t_loss
+    return the_weights, epoch_loss, validation_s_loss, validation_t_loss
 
 
 """

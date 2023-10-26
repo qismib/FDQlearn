@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import random
 
 
-def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: str,
+def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_s_file: str, the_val_t_file,
          the_param_file: str, choice: str, batch_size: int = 20, the_elem: int = 500, fold: int = 5, massive: bool = False):
     """
     Main function for QML algorithm for a dataset composed by different Feynman diagrams (s and t channel
@@ -16,7 +16,8 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
     :param: n_layers: number of layers used for the ansatz
     :param: the_file: string with the path of the csv file from which I want to build the dataset
     :param: the_train_file: file for the training loss over the training process
-    :param: the_val_file:  file for the validation loss at each epoch
+    :param: the_val_s_file:  file for the validation loss at each epoch for s-channel
+    :param: the_val_t_file:  file for the validation loss at each epoch for t-channel
     :param: the_param_file: file for the final values of the parameters of the network
     :param: the_choice: if we use a parametrized feature map or not
     :param: the_batch_size: batch size of the training dataset
@@ -106,7 +107,6 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
         # Building DataLoaders for each set
         training_loader = DataLoader(training_set, batch_size=batch_size)
-        validation_loader = DataLoader(validation_set)
         validation_s_loader = DataLoader(validation_s_set)
         validation_t_loader = DataLoader(validation_t_set)
 
@@ -169,10 +169,18 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
     print('average validation loss for t-channel at the end of the training:', cross_val_t_loss[-1], ' +- ', cross_val_t_loss_std[-1])
 
+    error_train_file = '../data/training_test_results/merged_training/parametrized_error_train_loss.txt'
+    error_val_s_file = '../data/training_test_results/merged_training/parametrized_error_val_s_loss.txt'
+    error_val_t_file = '../data/training_test_results/merged_training/parametrized_error_val_t_loss.txt'
+
     # saving the loss value for each epoch
     np.savetxt(the_train_file, cross_train_loss)
-    np.savetxt(the_val_file, cross_val_s_loss)
-    np.savetxt(the_val_file, cross_val_t_loss)
+    np.savetxt(the_val_s_file, cross_val_s_loss)
+    np.savetxt(the_val_t_file, cross_val_t_loss)
+    np.savetxt(error_train_file, cross_train_loss_std)
+    np.savetxt(error_val_s_file, cross_val_s_loss_std)
+    np.savetxt(error_val_t_file, cross_val_t_loss_std)
+
 
     # plotting the loss value for each epoch
     plt.plot(range(max_epoch), cross_train_loss, color='#CC4F1B')
@@ -199,9 +207,20 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_file: 
 
     init_params = 0.01 * torch.randn(total_num_params, dtype=torch.float)
     init_params.requires_grad = True
+
+    test_s_set = []
+    test_t_set = []
+    for t_elem in test_set:
+        if t_elem[0]['scattering'] == 'e_e_s':
+            test_s_set.append(t_elem)
+        elif t_elem[0]['scattering'] == 'e_e_t':
+            test_t_set.append(t_elem)
+
     cross_loader = DataLoader(cross_set, batch_size=batch_size)
     test_loader = DataLoader(test_set)
-    test_params, _, _, _ = merged_train_qgnn(cross_loader, test_loader, init_params, max_epoch,
+    test_s_loader = DataLoader(test_s_set)
+    test_t_loader = DataLoader(test_t_set)
+    test_params, _, _, _ = merged_train_qgnn(cross_loader, test_s_loader, test_t_loader, init_params, max_epoch,
                                              n_layers, choice, massive=massive)
     total_test_prediction(test_loader, test_params, n_layers, choice, massive)
 
@@ -215,16 +234,19 @@ num_layers = 3
 num_epoch = 50
 kfold = 5
 batch = 20
-elements = 1500
+elements = 1000
 massive_regime = False
 
 file = '../data/dataset/QED_data_qed.csv'
 train_file = '../data/training_test_results/merged_training/parametrized_total_train_loss.txt'
-val_file = '../data/training_test_results/merged_training/parametrized_total_val_loss.txt'
+val_s_file = '../data/training_test_results/merged_training/parametrized_total_val_s_loss.txt'
+val_t_file = '../data/training_test_results/merged_training/parametrized_total_val_t_loss.txt'
 test_pred_file = '../data/interference/parametrized_total_final_outcome.txt'
 test_param_file = '../data/interference/parametrized_total_final_params.txt'
+
 
 feature_map = 'fully_connected'  # Must be either "parametrized", "unparametrized", "fully_parametrized",
 # or "fully_connected", it indicates the kind of feature map to use in training
 
-main(num_layers, num_epoch, file, train_file, val_file, test_param_file, feature_map, batch, elements, kfold, massive=massive_regime)
+main(num_layers, num_epoch, file, train_file, val_s_file, val_t_file, test_param_file, feature_map, batch, elements,
+     kfold, massive=massive_regime)
