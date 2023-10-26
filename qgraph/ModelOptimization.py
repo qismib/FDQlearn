@@ -48,7 +48,7 @@ def relative_error(predictions, ground_truth):
     """
     n = len(predictions)
     assert len(ground_truth) == n, "The number of predictions and true labels is not equal"
-    error = np.array([np.abs(predictions[i] - ground_truth[i])/ground_truth[i] for i in range(n)])
+    error = np.array([np.abs(predictions[i] - ground_truth[i])/np.abs(ground_truth[i]) for i in range(n)])
     print(len(error))
     error = np.mean(error)
     return error
