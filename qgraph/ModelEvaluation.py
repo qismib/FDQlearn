@@ -71,7 +71,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
             if elem not in validation_set:
                 training_set.append(elem)
 
-        _, _ = standardization(training_set, validation_set)
+       # _, _ = standardization(training_set, validation_set)
 
         # Building DataLoaders for each set
         training_loader = DataLoader(training_set, batch_size=batch_size)
@@ -146,7 +146,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
     final_validation = []
     for i in val_loss:
         final_validation.append(i[-1])
-    optimal = min(final_validation)
+        optimal = min(final_validation)
     index = final_validation.index(optimal)
 
     print(final_params[index])
@@ -158,14 +158,14 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
 
     print('----------------------------------------------------------------------')
 
-    #_, _ = standardization(cross_set, test_set)
-    #test_loader = DataLoader(test_set)
-    #init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
-    #init_params.requires_grad = True
-    #cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    #test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
-    #test_prediction(test_loader, test_params, the_test_file, the_truth_file, the_angle_file, the_momentum_file,
-    #                n_layers, choice, massive)
+    # _, _ = standardization(cross_set, test_set)
+    # test_loader = DataLoader(test_set)
+    cross_loader = DataLoader(cross_set, batch_size=batch_size)
+    init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
+    init_params.requires_grad = True
+    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
+    test_prediction(test_loader, test_params, the_test_file, the_truth_file, the_angle_file, the_momentum_file,
+                    n_layers, choice, massive)
 
     test_params = final_params[index]
     return test_params
