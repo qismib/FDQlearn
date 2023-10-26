@@ -54,6 +54,20 @@ def relative_error(predictions, ground_truth):
     return error
 
 
+def mse(predictions, ground_truth):
+    """
+    :param predictions: list of predictions of the QGNN
+    :param  ground_truth: list of true labels
+    :return: rel_error: mean relative error
+    """
+    n = len(predictions)
+    assert len(ground_truth) == n, "The number of predictions and true labels is not equal"
+    error = np.array([(predictions[i] - ground_truth[i])**2 for i in range(n)])
+    print(len(error))
+    error = np.mean(error)
+    return error
+
+
 """
 here the_training_set must be a list tuple (graph, output)!!!!!
 """
@@ -279,8 +293,8 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
 
     rel_error = relative_error(targets, truth)
     print('the relative error per element of the test set is:', rel_error)
-    mse = get_mse(targets, truth)/len(targets)
-    print('the mean squared error per element of the test set is:', mse)
+    a_mse = mse(targets, truth)
+    print('the mean squared error per element of the test set is:', a_mse)
 
     # plotting lines
     # plt.plot(angles, targets, 'ro', label='predictions')
