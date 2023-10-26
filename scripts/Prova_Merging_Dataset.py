@@ -183,27 +183,27 @@ def main(n_layers, max_epoch, the_file: str, the_train_file: str, the_val_s_file
 
 
     # plotting the loss value for each epoch
-    plt.plot(range(max_epoch), cross_train_loss, color='#CC4F1B')
-    plt.fill_between(range(max_epoch), cross_train_loss - cross_train_loss_std, cross_train_loss + cross_train_loss_std,
-                     alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.title('Loss per epoch - training set ')
-    plt.show()
-    plt.plot(range(max_epoch), cross_val_s_loss, color='#1B2ACC')
-    plt.fill_between(range(max_epoch), cross_val_s_loss - cross_val_s_loss_std, cross_val_s_loss + cross_val_s_loss_std,
-                     alpha=0.5, edgecolor='#1B2ACC', facecolor='#089FFF')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.title('Loss per epoch - s-channel validation set ')
-    plt.show()
-    plt.plot(range(max_epoch), cross_val_t_loss, color='#00FF00')
-    plt.fill_between(range(max_epoch), cross_val_t_loss - cross_val_t_loss_std, cross_val_t_loss + cross_val_t_loss_std,
-                     alpha=0.5, edgecolor='#00FF00', facecolor='#99FF99')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.title('Loss per epoch - t-channel validation set ')
-    plt.show()
+    # plt.plot(range(max_epoch), cross_train_loss, color='#CC4F1B')
+    #plt.fill_between(range(max_epoch), cross_train_loss - cross_train_loss_std, cross_train_loss + cross_train_loss_std,
+                     # alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.title('Loss per epoch - training set ')
+    # plt.show()
+    # plt.plot(range(max_epoch), cross_val_s_loss, color='#1B2ACC')
+    # plt.fill_between(range(max_epoch), cross_val_s_loss - cross_val_s_loss_std, cross_val_s_loss + cross_val_s_loss_std,
+    #                 alpha=0.5, edgecolor='#1B2ACC', facecolor='#089FFF')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.title('Loss per epoch - s-channel validation set ')
+    # plt.show()
+    # plt.plot(range(max_epoch), cross_val_t_loss, color='#00FF00')
+    # plt.fill_between(range(max_epoch), cross_val_t_loss - cross_val_t_loss_std, cross_val_t_loss + cross_val_t_loss_std,
+    #                  alpha=0.5, edgecolor='#00FF00', facecolor='#99FF99')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.title('Loss per epoch - t-channel validation set ')
+    # plt.show()
 
     init_params = 0.01 * torch.randn(total_num_params, dtype=torch.float)
     init_params.requires_grad = True
@@ -231,10 +231,10 @@ np.random.seed(12345)
 
 
 num_layers = 3
-num_epoch = 50
-kfold = 5
+num_epoch = 10
+kfold = 2
 batch = 20
-elements = 1000
+elements = 50
 massive_regime = False
 
 file = '../data/dataset/QED_data_qed.csv'
