@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 import random
 
 
-def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_file: str, the_test_file: str,
-                     the_truth_file: str, choice: str, batch_size=20, fold: int = 5, massive: bool = False):
+def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_train_std_file: str, the_val_file: str,
+                     the_val_std_file: str, the_test_file: str, the_truth_file: str, the_angle_file: str, choice: str, batch_size=20,
+                     fold: int = 5, massive: bool = False):
 
     """
     CALCULATING THE NUMBER OF PARAMETERS I HAVE TO DEFINE FOR THE QGNN
@@ -126,43 +127,45 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_val_
     # saving the loss value for each epoch
     np.savetxt(the_train_file, cross_train_loss)
     np.savetxt(the_val_file, cross_val_loss)
+    np.savetxt(the_train_std_file, cross_train_loss_std)
+    np.savetxt(the_val_std_file, cross_val_loss_std)
 
     # plotting the loss value for each epoch
-    plt.plot(range(max_epoch), cross_train_loss, color='#CC4F1B')
-    plt.fill_between(range(max_epoch), cross_train_loss - cross_train_loss_std, cross_train_loss + cross_train_loss_std,
-                     alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.title('Loss per epoch - training set ')
-    plt.show()
-    plt.plot(range(max_epoch), cross_val_loss, color='#1B2ACC')
-    plt.fill_between(range(max_epoch), cross_val_loss - cross_val_loss_std, cross_val_loss + cross_val_loss_std,
-                     alpha=0.5, edgecolor='#1B2ACC', facecolor='#089FFF')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Loss per Epoch')
-    plt.title('Loss per epoch - validation set ')
-    plt.show()
+    # plt.plot(range(max_epoch), cross_train_loss, color='#CC4F1B')
+    # plt.fill_between(range(max_epoch), cross_train_loss - cross_train_loss_std, cross_train_loss + cross_train_loss_std,
+    #                 alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.title('Loss per epoch - training set ')
+    # plt.show()
+    # plt.plot(range(max_epoch), cross_val_loss, color='#1B2ACC')
+    # plt.fill_between(range(max_epoch), cross_val_loss - cross_val_loss_std, cross_val_loss + cross_val_loss_std,
+    #                 alpha=0.5, edgecolor='#1B2ACC', facecolor='#089FFF')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.title('Loss per epoch - validation set ')
+    # plt.show()
 
-    # final_validation = []
-    # for i in val_loss:
-    #    final_validation.append(i[-1])
-    # optimal = min(final_validation)
-    # index = final_validation.index(optimal)
+    final_validation = []
+    for i in val_loss:
+        final_validation.append(i[-1])
+    optimal = min(final_validation)
+    index = final_validation.index(optimal)
 
-    # print(final_params[index])
+    print(final_params[index])
 
-    # test_loader = DataLoader(test_set)
-    # test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, n_layers, choice, massive)
+    test_loader = DataLoader(test_set)
+    test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, n_layers, choice, massive)
 
     print('----------------------------------------------------------------------')
 
-    _, _ = standardization(cross_set, test_set)
-    test_loader = DataLoader(test_set)
-    init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
-    init_params.requires_grad = True
-    cross_loader = DataLoader(cross_set, batch_size=batch_size)
-    test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
-    test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
+    # _, _ = standardization(cross_set, test_set)
+    # test_loader = DataLoader(test_set)
+    # init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
+    # init_params.requires_grad = True
+    # cross_loader = DataLoader(cross_set, batch_size=batch_size)
+    # test_params, _, _ = train_qgnn(cross_loader, test_loader, init_params, max_epoch, n_layers, choice, massive=massive)
+    # test_prediction(test_loader, test_params, the_test_file, the_truth_file, n_layers, choice, massive)
 
-    # test_params = final_params[index]
+    test_params = final_params[index]
     return test_params

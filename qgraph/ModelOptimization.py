@@ -243,14 +243,17 @@ function for predicting and plotting the test_set
 """
 
 
-def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_n_layers=3,
-                    the_choice: str = 'parametrized', massive: bool = False):
+def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_file: str, the_angle_file: str,
+                    the_momentum_file: str, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
     """
     this function compute the predicted outputs of unknown datas (testset) and compare them
     to true output of them with a plot
     :param: the_test_loader: DataLoader object of the test set
     :param: the_params: parameters to insert in the quantum circuit
     :param: the_test_file: file where I save the predictions of the test set
+    :param: the_truth_file: file where I save the theoretical values of the test set
+    :param: the_angle_file: file where I save the scattering angles of the test set
+    :param: the_momentum_file: file where I save the momenta of the test set
     :param: the_n_layers: numbers of layers of the quantum circuit
     :param:  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
     :param: massive: boolean value that indicates whether we're in massive or massless regime
@@ -276,28 +279,33 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
 
     rel_error = relative_error(targets, truth)
     print('the relative error per element of the test set is:', rel_error)
+    mse = get_mse(targets, truth)/len(targets)
+    print('the mean squared error per element of the test set is:', mse)
 
     # plotting lines
-    plt.plot(angles, targets, 'ro', label='predictions')
-    plt.plot(angles, truth, 'bs', label='ground truth')
-    plt.title('|M|^2 prediction over the test set')
-    plt.xlabel('Scattering Angle (rad)')
-    plt.ylabel('Squared Matrix Element')
-    plt.legend(loc='upper right')
-    plt.grid(True)
-    plt.show()
-    if massive is True:
-        ax = plt.axes(projection='3d')
-        ax.scatter3D(angles, momentum, targets, color='red')
-        ax.scatter3D(angles, momentum, truth, color='blue')
-        ax.set_title('Squared Matrix Element')
-        ax.set_xlabel('Scattering Angle (rad)', fontsize=12)
-        ax.set_ylabel('Momentum of the particles', fontsize=12)
-        ax.set_zlabel('Squared Matrix Element', fontsize=12)
-        plt.show()
+    # plt.plot(angles, targets, 'ro', label='predictions')
+    # plt.plot(angles, truth, 'bs', label='ground truth')
+    # plt.title('|M|^2 prediction over the test set')
+    # plt.xlabel('Scattering Angle (rad)')
+    # plt.ylabel('Squared Matrix Element')
+    # plt.legend(loc='upper right')
+    # plt.grid(True)
+    # plt.show()
+    # if massive is True:
+    #    ax = plt.axes(projection='3d')
+    #    ax.scatter3D(angles, momentum, targets, color='red')
+    #    ax.scatter3D(angles, momentum, truth, color='blue')
+    #    ax.set_title('Squared Matrix Element')
+    #    ax.set_xlabel('Scattering Angle (rad)', fontsize=12)
+    #    ax.set_ylabel('Momentum of the particles', fontsize=12)
+    #    ax.set_zlabel('Squared Matrix Element', fontsize=12)
+    #    plt.show()
 
     np.savetxt(the_truth_file, truth)
     np.savetxt(the_test_file, targets)
+    np.savetxt(the_angle_file, angles)
+    if massive is True:
+        np.savetxt(the_momentum_file, momentum)
 
 
 def total_test_prediction(the_test_loader, the_params, the_n_layers=3, the_choice: str = 'parametrized', massive: bool = False):
