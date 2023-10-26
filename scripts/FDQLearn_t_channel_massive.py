@@ -7,7 +7,7 @@ from qgraph import FeynmanDiagramDataset, model_evaluation
 torch.manual_seed(12345)
 np.random.seed(12345)
 
-num_layers = 3
+num_layers = 5
 k_fold = 5
 num_epoch = 50
 batch = 20
@@ -18,23 +18,23 @@ csv_file = '../data/dataset/QED_data_e_annih_e_t_massive.csv'
 
 q_dataset = FeynmanDiagramDataset(the_file_path=csv_file, the_n_elements=elements)
 
-train_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_loss_massive_3l.txt'
+train_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_loss_massive_5l.txt'
 
-val_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_loss_massive_3l.txt'
+val_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_loss_massive_5l.txt'
 
-test_pred_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_predictions_massive_3l.txt'
+test_pred_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_predictions_massive_5l.txt'
 
-truth_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_ground_truth_massive_3l.txt'
+truth_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_ground_truth_massive_5l.txt'
 
-final_params_file = '../data/training_test_results/t_channel_massive/parametrized_channel_t_final_params_massive_3l.txt'
+final_params_file = '../data/training_test_results/t_channel_massive/parametrized_channel_t_final_params_massive_5l.txt'
 
-train_std_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_std_3l_massive.txt'
+train_std_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_train_std_5l_massive.txt'
 
-val_std_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_std_3l_massive.txt'
+val_std_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_std_5l_massive.txt'
 
-angle_file = '../data/training_test_results/s_channel_massive/parametrized_s_channel_angles_massive_3l.txt'
+angle_file = '../data/training_test_results/s_channel_massive/parametrized_s_channel_angles_massive_5l.txt'
 
-momenta_file = '../data/training_test_results/s_channel_massive/parametrized_s_channel_momenta_massive_3l.txt'
+momenta_file = '../data/training_test_results/s_channel_massive/parametrized_s_channel_momenta_massive_5l.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
