@@ -32,9 +32,9 @@ train_std_file = '../data/training_test_results/t_channel_massive/parametrized_t
 
 val_std_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_val_std_3l_massive.txt'
 
-angle_file = '../data/training_test_results/s_channel_massive/parametrized_s_channel_angles_massive_3l.txt'
+angle_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_angles_massive_3l.txt'
 
-momenta_file = '../data/training_test_results/s_channel_massive/parametrized_s_channel_momenta_massive_3l.txt'
+momenta_file = '../data/training_test_results/t_channel_massive/parametrized_t_channel_momenta_massive_3l.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
