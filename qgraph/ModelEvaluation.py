@@ -1,6 +1,6 @@
 from pennylane import numpy as np
 import torch
-from qgraph import train_qgnn, test_prediction, standardization
+from qgraph import train_qgnn, test_prediction, min_max, min_max_scaling
 from torch_geometric.loader import DataLoader
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -62,6 +62,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
     val_loss = [0]*fold
     final_params = [0]*fold
 
+    the_p_stat = [0]*fold
+
     # doing a k-fold cross validation
     for i in range(fold):
         # Splitting q_dataset into training and validation set
@@ -71,7 +73,8 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
             if elem not in validation_set:
                 training_set.append(elem)
 
-       # _, _ = standardization(training_set, validation_set)
+        # min-max scaling part
+        _, the_p_stat[i] = min_max(training_set, validation_set)
 
         # Building DataLoaders for each set
         training_loader = DataLoader(training_set, batch_size=batch_size)
@@ -114,7 +117,7 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
             mean2 = mean2 + val_loss[i][j] * val_loss[i][j] / fold
 
         cross_val_loss.append(mean)
-        cross_val_loss_std.append(np.sqrt(mean2-mean*mean))
+        cross_val_loss_std.append(np.sqrt(mean2-mean*mean)*fold/(fold-1))
 
     cross_val_loss = np.array(cross_val_loss)
     cross_val_loss_std = np.array(cross_val_loss_std)
@@ -150,16 +153,13 @@ def model_evaluation(n_layers, max_epoch, dataset, the_train_file: str, the_trai
     index = final_validation.index(optimal)
 
     print(final_params[index])
-
-    # _, _ = standardization(cross_set, test_set)
     test_loader = DataLoader(test_set)
+
     test_prediction(test_loader, final_params[index], the_test_file, the_truth_file, the_angle_file, the_momentum_file,
                     n_layers, choice, massive)
 
     print('----------------------------------------------------------------------')
 
-    # _, _ = standardization(cross_set, test_set)
-    # test_loader = DataLoader(test_set)
     # cross_loader = DataLoader(cross_set, batch_size=batch_size)
     # init_params = 0.01*torch.randn(total_num_params, dtype=torch.float)
     # init_params.requires_grad = True
