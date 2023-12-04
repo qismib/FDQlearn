@@ -7,7 +7,7 @@ from qgraph import FeynmanDiagramDataset, model_evaluation
 torch.manual_seed(12345)
 np.random.seed(12345)
 
-num_layers = 5
+num_layers = 3
 k_fold = 5
 num_epoch = 50
 batch = 20

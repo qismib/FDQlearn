@@ -5,7 +5,6 @@ from torch import optim
 from torch_geometric.utils import to_networkx
 from qgraph import expect_value
 import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
 
 
 def predict(the_dataset, the_weights, the_n_layers, the_choice: str, massive: bool = False):
@@ -29,6 +28,24 @@ def predict(the_dataset, the_weights, the_n_layers, the_choice: str, massive: bo
     return predictions
 
 
+def single_predict(the_data, the_weights, the_n_layers, the_choice: str, massive: bool = False):
+    """
+    :param the_data: either validation or test set, list of datas
+    :param the_weights: array of trained parameters
+    :param the_n_layers: number of layers of the ansatz (depth of the circuit)
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: prediction of the network
+    """
+    the_circuit_weights = the_weights[:-2]
+    the_observable_weights = the_weights[-2:]
+
+    probability = expect_value(the_data, the_n_layers, the_circuit_weights, the_choice, massive)
+    output = torch.abs(the_observable_weights[0])*probability[0][0] + torch.abs(the_observable_weights[1])*probability[0][1]
+
+    return output
+
+
 def get_mse(predictions, ground_truth):
     """
     :param predictions: list of predictions of the QGNN
@@ -38,7 +55,6 @@ def get_mse(predictions, ground_truth):
     n = len(predictions)
     assert len(ground_truth) == n, "The number of predictions and true labels is not equal"
     return sum([(predictions[i] - torch.tensor(ground_truth[i], dtype=torch.float))**2 for i in range(n)])
-
 
 def relative_error(predictions, ground_truth):
     """
@@ -297,23 +313,23 @@ def test_prediction(the_test_loader, the_params, the_test_file: str, the_truth_f
     print('the mean squared error per element of the test set is:', a_mse)
 
     # plotting lines
-    # plt.plot(angles, targets, 'ro', label='predictions')
-    # plt.plot(angles, truth, 'bs', label='ground truth')
-    # plt.title('|M|^2 prediction over the test set')
-    # plt.xlabel('Scattering Angle (rad)')
-    # plt.ylabel('Squared Matrix Element')
-    # plt.legend(loc='upper right')
-    # plt.grid(True)
-    # plt.show()
-    # if massive is True:
-    #    ax = plt.axes(projection='3d')
-    #    ax.scatter3D(angles, momentum, targets, color='red')
-    #    ax.scatter3D(angles, momentum, truth, color='blue')
-    #    ax.set_title('Squared Matrix Element')
-    #    ax.set_xlabel('Scattering Angle (rad)', fontsize=12)
-    #    ax.set_ylabel('Momentum of the particles', fontsize=12)
-    #    ax.set_zlabel('Squared Matrix Element', fontsize=12)
-    #    plt.show()
+    plt.plot(angles, targets, 'ro', label='predictions')
+    plt.plot(angles, truth, 'bs', label='ground truth')
+    plt.title('|M|^2 prediction over the test set')
+    plt.xlabel('Scattering Angle (rad)')
+    plt.ylabel('Squared Matrix Element')
+    plt.legend(loc='upper right')
+    plt.grid(True)
+    plt.show()
+    if massive is True:
+        ax = plt.axes(projection='3d')
+        ax.scatter3D(angles, momentum, targets, color='red')
+        ax.scatter3D(angles, momentum, truth, color='blue')
+        ax.set_title('Squared Matrix Element')
+        ax.set_xlabel('Scattering Angle (rad)', fontsize=12)
+        ax.set_ylabel('Momentum of the particles', fontsize=12)
+        ax.set_zlabel('Squared Matrix Element', fontsize=12)
+        plt.show()
 
     np.savetxt(the_truth_file, truth)
     np.savetxt(the_test_file, targets)

@@ -88,8 +88,8 @@ def min_max_scaling(the_set, the_y_min, the_y_max, the_p_min, the_p_max): #, the
     :return: None
     """
 
-    set_y = [i[1] for i in the_set]
+    # set_y = [i[1] for i in the_set]
     set_p_values = [i[0]['p_norm'] for i in the_set]
     for i in range(len(the_set)):
-        the_set[i][1] = ((set_y[i] - the_y_min) / (the_y_max - the_y_min))
-        the_set[i][0]['p_norm'] = ((set_p_values[i] - the_p_min) / (the_y_max - the_y_min))
+        # the_set[i][1] = ((set_y[i] - the_y_min) / (the_y_max - the_y_min))
+        the_set[i][0]['p_norm'] = np.pi*((set_p_values[i] - the_p_min) / (the_p_max - the_p_min))

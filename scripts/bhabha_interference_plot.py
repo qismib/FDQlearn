@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from pennylane import numpy as np
 import torch
-from qgraph import FeynmanDiagramDataset, relative_error
+from qgraph import FeynmanDiagramDataset, mse
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -15,7 +15,8 @@ file1 = '../data/dataset/QED_data_e_annih_e_s.csv'
 file2 = '../data/dataset/QED_data_e_annih_e_t.csv'
 interference_file = '../data/interference/bhabha_interference_outcomes.txt'
 angle_file = '../data/interference/bhabha_angles.txt'
-# loss_file = '../data/interference/bhabha_interference_loss.txt'
+loss_file = '../data/interference/bhabha_interference_loss.txt'
+std_file = '../data/interference/bhabha_interference_std.txt'
 
 torch.manual_seed(68459)
 np.random.seed(68459)
@@ -31,9 +32,13 @@ y = function(x, p)
 
 angles = np.loadtxt(angle_file)
 predictions = np.loadtxt(interference_file)
-# loss = np.loadtxt(loss_file)
-
 truth = function(angles, p)
+loss = np.loadtxt(loss_file)
+# loss_std = np.loadtxt(std_file)
+
+a_mse = mse(predictions, truth)
+print('the mean squared error per element of the test set is:', a_mse)
+
 
 plt.plot(angles, predictions, 'ro', label='circuit prediction')
 plt.plot(x, y, label='theoretical result')
@@ -44,5 +49,11 @@ plt.plot(angles, predictions, 'ro', label='circuit prediction')
 plt.legend(loc='upper right')
 plt.show()
 
-# plt.plot(len(loss), loss, label='optimization loss')
-# plt.show()
+plt.plot(range(len(loss)), loss)
+# plt.fill_between(range(len(loss)), loss - loss_std, loss + loss_std,
+#                 alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
+plt.xlabel('Number of Epochs')
+plt.ylabel('Loss per Epoch')
+plt.title('Loss per epoch - training set ')
+# plt.yscale('log')
+plt.show()

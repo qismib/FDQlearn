@@ -7,7 +7,7 @@ from qgraph import FeynmanDiagramDataset, model_evaluation
 torch.manual_seed(12345)
 np.random.seed(12345)
 
-num_layers = 3
+num_layers = 5
 k_fold = 5
 num_epoch = 30
 batch = 20
@@ -18,23 +18,23 @@ csv_file = '../data/dataset/QED_data_e_annih_mu_massive.csv'
 
 q_dataset = FeynmanDiagramDataset(the_file_path=csv_file, the_n_elements=elements)
 
-train_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_train_loss_massive_3l.txt'
+train_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_train_loss_massive_3l_raw.txt'
 
-val_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_val_loss_massive_3l.txt'
+val_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_val_loss_massive_3l_raw.txt'
 
-test_pred_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_predictions_massive_3l.txt'
+test_pred_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_predictions_massive_3l_raw.txt'
 
-truth_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_truth_massive_3l.txt'
+truth_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_truth_massive_3l_raw.txt'
 
-final_params_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_final_params_massive_3l.txt'
+final_params_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_final_params_massive_3l_raw.txt'
 
-train_std_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_train_std_massive_3l.txt'
+train_std_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_train_std_massive_3l_raw.txt'
 
-val_std_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_val_std_massive_3l.txt'
+val_std_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_val_std_massive_3l_raw.txt'
 
-angle_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_angles_massive_3l.txt'
+angle_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_angles_massive_3l_raw.txt'
 
-momenta_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_momenta_massive_3l.txt'
+momenta_file = '../data/training_test_results/e_mu_massive/parametrized_e_mu_momenta_massive_3l_raw.txt'
 
 feature_map = 'parametrized'  # Must be either "parametrized", "unparametrized" or "fully_connected", it indicates the
 # kind of feature map to use in training
