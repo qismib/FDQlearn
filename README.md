@@ -66,7 +66,7 @@ for Windows PowerShell:
 2) $ .venv/Scripts/Activate.ps1
 
 
-3) run whatever cmd, es: $ python scripts/FDQLearn_main.py
+3) run whatever cmd, es: $ python scripts/FDQLearn_e_mu_massive.py
 
 
 4) to deactivate just run: deactivate
@@ -101,7 +101,7 @@ Install 'requirements.txt' and my library:
 
 1) $ conda activate ./.venv
 
-2) run whatever cmd, es: $ python scripts/FDQLearn_main.py
+2) run whatever cmd, es: $ python scripts/FDQLearn_e_mu_massive.py
 
 3) to stop the virtual environment: conda deactivate
 
