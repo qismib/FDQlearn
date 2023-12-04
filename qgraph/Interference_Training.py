@@ -1,0 +1,597 @@
+import time
+from pennylane import numpy as np
+import torch
+from torch import optim
+from torch_geometric.utils import to_networkx
+from qgraph import interference_circuit, single_predict
+
+
+def interference_truth(func, theta, p):  # for massless regime
+    return func(theta, p)
+
+
+def interference_prediction(the_s_data, the_s_params, the_t_data, the_t_params, the_weights, the_layers, the_choice: str,
+                            massive: bool = False):
+
+    prediction = 2*interference_circuit(the_s_data, the_s_params, the_weights[0], the_t_data, the_t_params,
+                                        the_weights[1], the_layers, the_choice, massive=massive)
+
+    return prediction
+
+
+def training_interference(true_fun, s_loader, the_s_params, t_loader, the_t_params, the_n_epochs: int = 100,
+                          the_n_layers: list = [3,5], fold: int = 5,  the_choice: str = 'parametrized', massive: bool = False):
+    """
+    Training function used to tune the phases for the two Feynman diagrams
+    :param true_fun: function corresponding to the interference term of two Feynman diagrams (now it must only depend on
+    a single momentum variable p and one single scattering angle theta)
+    :param  s_loader: DataLoader object of the s-channel training set
+    :param the_s_params: final params for the s-channel QGNN
+    :param  t_loader: DataLoader object of the t-channel training set
+    :param the_t_params: final params for the s-channel QGNN
+    :param  the_n_epochs: number of epochs of the training process
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param fold: numbers of times we repeat the training
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: the_weights: list of the final weights after the training
+    """
+
+    cross_weights = []
+    s_set = []
+    t_set = []
+    epoch_loss = [0]*fold
+
+    for s_item, t_item in zip(s_loader, t_loader):
+        # converting for each batch any DataLoader item into a list of tuples of networkx graph
+        # object and the corresponding output
+        s_element = to_networkx(data=s_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+        t_element = to_networkx(data=t_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+
+        assert s_element.graph['theta'] == t_element.graph['theta'] and \
+               s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
+
+        s_set.append(s_element)
+        t_set.append(t_element)
+
+    for i in range(fold):
+
+        epoch_loss[i] = []
+
+        the_weights = 0.01 * torch.randn(2, dtype=torch.float)
+        the_weights.requires_grad = True
+        opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+
+        for epoch in range(the_n_epochs):
+            costs = []
+            starting_time = time.time()
+
+            for s_data, t_data in zip(s_set, t_set):
+                def opt_func():  # defining an optimization function for the training of the model
+
+                    assert s_data.graph['theta'] == t_data.graph['theta'] and \
+                           s_data.graph['p_norm'] == t_data.graph['p_norm'], "the angles and the momenta must be the same"
+
+                    prediction = interference_prediction(s_data, the_s_params, t_data, the_t_params, the_weights,
+                                                         the_n_layers, the_choice, massive=massive)
+
+                    truth = interference_truth(true_fun, s_data.graph['theta'], s_data.graph['p_norm'])
+
+                    loss = (prediction - torch.tensor(truth, dtype=torch.float))**2
+                    costs.append(loss.item())
+                    loss.backward()
+                    return loss
+
+                opt.zero_grad()
+                opt.step(opt_func)
+
+            ending_time = time.time()
+            elapsed = ending_time - starting_time
+
+            training_loss = np.mean(costs)
+            epoch_loss.append(training_loss)
+
+            if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
+                the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
+                print('the training process stopped at epoch number ', epoch)
+                break
+
+            if epoch % 5 == 0:
+                res = [epoch, training_loss, elapsed]
+                print("Epoch: {:2d} | Training loss: {:3f} | Elapsed Time per Epoch: {:3f}".format(*res))
+
+        cross_weights.append(the_weights)
+
+        print('finished ', (i+1), ' repetition of k-fold cross validation')
+
+    cross_loss = []
+    cross_loss_std = []
+    for j in range(len(epoch_loss[0])):
+        mean = 0
+        mean2 = 0
+        for i in range(fold):
+            mean = mean + epoch_loss[i][j] / fold
+            mean2 = mean2 + epoch_loss[i][j] * epoch_loss[i][j] / fold
+
+        cross_loss.append(mean)
+        cross_loss_std.append(np.sqrt(mean2 - mean * mean))
+
+    np.savetxt('../data/interference/bhabha_interference_cross_training_loss.txt', cross_loss)
+    np.savetxt('../data/interference/bhabha_interference_cross_training_std.txt', cross_loss_std)
+
+    final_loss = []
+    for i in cross_loss:
+        final_loss.append(i[-1])
+        optimal = min(final_loss)
+    index = final_loss.index(optimal)
+
+    # plotting the loss value for each epoch
+    # plt.plot(range(the_n_epochs), epoch_loss, label='training')
+    # plt.xlabel('Number of Epochs')
+    # plt.ylabel('Loss per Epoch')
+    # plt.legend(loc="upper right")
+    # plt.show()
+
+    return cross_weights[index], cross_loss, cross_loss_std
+
+
+def one_data_training(true_fun, s_loader, the_s_params, t_loader, the_t_params, the_n_epochs: int = 100,
+                      the_n_layers: list = [3,5], fold: int = 5, the_choice: str = 'parametrized', massive: bool = False):
+    """
+    Training function used to tune the phases for the two Feynman diagrams
+    :param true_fun: function corresponding to the interference term of two Feynman diagrams (now it must only depend on
+    a single momentum variable p and one single scattering angle theta)
+    :param  s_loader: DataLoader object of the s-channel training set
+    :param the_s_params: final params for the s-channel QGNN
+    :param  t_loader: DataLoader object of the t-channel training set
+    :param the_t_params: final params for the s-channel QGNN
+    :param  the_n_epochs: number of epochs of the training process
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param fold: number of times we tune each datapoint in order to make a grid search of the parameters
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: output: predictions of the circuit
+    :return: angles: list of the angle's values for each data
+    """
+
+    s_set = []
+    t_set = []
+    inter_pred = []
+    ground_truth = []
+    angles = []
+
+    for s_item, t_item in zip(s_loader, t_loader):
+        # converting for each batch any DataLoader item into a list of tuples of networkx graph
+        # object and the corresponding output
+        s_element = to_networkx(data=s_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+        t_element = to_networkx(data=t_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+
+        assert s_element.graph['theta'] == t_element.graph['theta'] and \
+               s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
+
+        s_set.append(s_element)
+        t_set.append(t_element)
+
+        cross_weights = []
+        cross_loss = []
+
+        truth = interference_truth(true_fun, s_element.graph['theta'][0], s_element.graph['p_norm'][0])
+
+        for i in range(fold):
+            starting_time = time.time()
+
+            the_weights = torch.randn(2, dtype=torch.float)
+            the_weights.requires_grad = True
+            opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+            epoch_loss = []
+            convergence = the_n_epochs
+            training_loss = 0
+
+            for epoch in range(the_n_epochs):
+                costs = []
+
+                def opt_func():  # defining an optimization function for the training of the model
+
+                    prediction = interference_prediction(s_element, the_s_params, t_element, the_t_params, the_weights,
+                                                         the_n_layers, the_choice, massive=massive)
+
+                    loss = (prediction - torch.tensor(truth, dtype=torch.float))**2
+                    costs.append(loss.item())
+                    loss.backward()
+                    return loss
+
+                opt.zero_grad()
+                opt.step(opt_func)
+
+                training_loss = np.mean(costs)
+                epoch_loss.append(training_loss)
+
+                # if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
+                #    convergence = epoch + 1  # Have to add 1 for plotting the right number of epochs
+                #    break
+
+            if len(s_set) % 10 == 0:
+                ending_time = time.time()
+                elapsed = ending_time - starting_time
+                res = [len(s_set), convergence, training_loss, elapsed]
+                print("Element: {:2d} | Epoch: {:2d} | Training loss: {:3f} | Elapsed Time: {:3f}".format(*res))
+                print("finished the fold number", (i + 1))
+
+            cross_loss.append(epoch_loss[-1])
+            cross_weights.append(the_weights)
+
+        optimal = min(cross_loss)
+        index = cross_loss.index(optimal)
+
+        inter_pred.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, cross_weights[index],
+                                                  the_n_layers, the_choice, massive=massive))
+        angles.append(s_element.graph['theta'])
+
+        if len(s_set) % 10 == 0:
+            print('-----------------------------------------------------')
+
+    return inter_pred, angles
+
+
+def interference_test(s_test_loader, the_s_params, t_test_loader, the_t_params, the_final_weights, the_n_layers: list = [3,5],
+                      the_choice: str = 'parametrized', massive: bool = False):
+    """
+    Testing function used to check if the interference circuit works
+    :param  s_test_loader: DataLoader object of the s-channel training set
+    :param the_s_params: final params for the s-channel QGNN
+    :param  t_test_loader: DataLoader object of the t-channel training set
+    :param the_t_params: final params for the s-channel QGNN
+    :param the_final_weights: parameters to insert in the quantum circuit after the tuning (only 2 values)
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: output: predictions of the circuit
+    :return: angles: list of the angle's values for each data
+    """
+
+    assert len(s_test_loader) == len(t_test_loader), "the length of the Dataloaders must be the same"
+
+    output = []
+    angles = []
+    truth = []
+
+    for s, t in zip(s_test_loader, t_test_loader):
+        # converting for each batch any DataLoader item into a list of tuples of networkx graph
+        # object and the corresponding output
+        s_element = to_networkx(data=s[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+        t_element = to_networkx(data=t[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+
+        assert s_element.graph['theta'] == t_element.graph['theta'] and \
+               s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
+
+        output.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, the_final_weights,
+                                              the_n_layers, the_choice, massive=massive))
+        angles.append(s_element.graph['theta'])
+
+    return output, angles
+
+
+def interference_gauge_setting(true_fun, s_loader, the_s_params, t_loader, the_t_params, the_n_layers: list = [3,5],
+                               the_choice: str = 'parametrized', massive: bool = False):
+    """
+    Hard computing function used to tune the phases for the two Feynman diagrams
+    :param true_fun: function corresponding to the interference term of two Feynman diagrams (now it must only depend on
+    a single momentum variable p and one single scattering angle theta)
+    :param  s_loader: DataLoader object of the s-channel training set
+    :param the_s_params: final params for the s-channel QGNN
+    :param  t_loader: DataLoader object of the t-channel training set
+    :param the_t_params: final params for the s-channel QGNN
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: output: predictions of the circuit
+    :return: angles: list of the angle's values for each data
+    """
+
+    gamma = np.linspace(0, 2*np.pi, 75)
+    delta = np.linspace(0, 2*np.pi, 75)
+
+    s_set = []
+    t_set = []
+    total_loss = []
+    inter_pred = []
+    ground_truth = []
+    angles = []
+
+    for s_item, t_item in zip(s_loader, t_loader):
+        # converting for each batch any DataLoader item into a list of tuples of networkx graph
+        # object and the corresponding output
+        s_element = to_networkx(data=s_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+        t_element = to_networkx(data=t_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+
+        assert s_element.graph['theta'] == t_element.graph['theta'] and \
+               s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
+
+        s_set.append(s_element)
+        t_set.append(t_element)
+
+        loss = []
+        prediction = []
+
+        is_looping = True
+        starting_time = time.time()
+
+        truth = interference_truth(true_fun, s_element.graph['theta'], s_element.graph['p_norm'])
+
+        for i in gamma:
+            for j in delta:
+
+                prediction.append(interference_prediction(s_element, the_s_params, t_element, the_t_params, [i, j],
+                                                          the_n_layers, the_choice, massive=massive))
+
+                loss.append((prediction[-1] - torch.tensor(truth, dtype=torch.float)) ** 2)
+
+                if loss[-1] < 1e-8:
+                    is_looping = False
+                    break
+
+            if not is_looping:
+                break
+
+        loss = torch.tensor([loss])
+        total_loss.append(torch.min(loss))
+        min_index = torch.argmin(loss)
+        inter_pred.append(prediction[min_index])
+        ground_truth.append(truth)
+        angles.append(s_element.graph['theta'])
+
+        ending_time = time.time()
+        elapsed = ending_time - starting_time
+
+        if len(s_set) % 5 == 0:
+            res = [len(s_set)-1, elapsed]
+            print("Element: {:2d} | Elapsed Time per Data: {:3f}".format(*res))
+
+    return inter_pred, angles, total_loss
+
+
+def interference_new(true_fun, s_loader, the_s_params, t_loader, the_t_params, the_n_epochs: int = 100,
+                     the_n_layers: list = [3,3], fold: int = 5, the_choice: str = 'parametrized', massive: bool = False):
+    """
+    Training function used to tune the phases for the two Feynman diagrams
+    :param true_fun: function corresponding to the interference term of two Feynman diagrams (now it must only depend on
+    a single momentum variable p and one single scattering angle theta)
+    :param  s_loader: DataLoader object of the s-channel training set
+    :param the_s_params: final params for the s-channel QGNN
+    :param  t_loader: DataLoader object of the t-channel training set
+    :param the_t_params: final params for the s-channel QGNN
+    :param  the_n_epochs: number of epochs of the training process
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param fold: number of times we tune each datapoint in order to make a grid search of the parameters
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: output: predictions of the circuit
+    :return: angles: list of the angle's values for each data
+    """
+
+    s_set = []
+    t_set = []
+    inter_pred = []
+    angles = []
+    true_interf = []
+    s_amplitude = []
+    t_amplitude = []
+
+    for s_item, t_item in zip(s_loader, t_loader):
+        # converting for each batch any DataLoader item into a list of tuples of networkx graph
+        # object and the corresponding output
+        s_element = to_networkx(data=s_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+        t_element = to_networkx(data=t_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+
+        assert s_element.graph['theta'] == t_element.graph['theta'] and \
+               s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
+
+        s_set.append(s_element)
+        t_set.append(t_element)
+
+        truth = interference_truth(true_fun, s_element.graph['theta'][0], s_element.graph['p_norm'][0])
+
+        true_interf.append(truth)
+
+        the_s_prediction = single_predict(s_element, the_s_params, the_n_layers[0], the_choice,
+                                          massive=massive)
+
+        s_amplitude.append(the_s_prediction)
+
+        the_t_prediction = single_predict(t_element, the_t_params, the_n_layers[1], the_choice,
+                                          massive=massive)
+
+        t_amplitude.append(the_t_prediction)
+
+        for i in range(fold):
+            starting_time = time.time()
+
+            cross_loss = []
+            cross_weights = []
+
+            the_weights = torch.randn(2, dtype=torch.float)
+            the_weights.requires_grad = True
+            opt = optim.Adam([the_weights], lr=1e-1)  # initialization of the optimizer to use
+            epoch_loss = []
+            convergence = the_n_epochs
+            training_loss = 0
+
+            for epoch in range(the_n_epochs):
+                costs = []
+
+                def opt_func():  # defining an optimization function for the training of the model
+
+                    prediction = 2*torch.sqrt(the_s_prediction*the_t_prediction)*torch.cos(the_weights[0])
+
+                    loss = (prediction - torch.tensor(truth, dtype=torch.float))**2
+                    costs.append(loss.item())
+                    loss.backward()
+                    return loss
+
+                opt.zero_grad()
+                opt.step(opt_func)
+
+                training_loss = np.mean(costs)
+                epoch_loss.append(training_loss)
+
+                # if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
+                #    convergence = epoch + 1  # Have to add 1 for plotting the right number of epochs
+                #    break
+
+            if len(s_set) % 10 == 0:
+                ending_time = time.time()
+                elapsed = ending_time - starting_time
+                res = [len(s_set), convergence, training_loss, elapsed]
+                print("Element: {:2d} | Epoch: {:2d} | Training loss: {:3f} | Elapsed Time: {:3f}".format(*res))
+                print("finished the fold number", (i + 1))
+
+            cross_loss.append(epoch_loss[-1])
+            cross_weights.append(the_weights[0])
+
+        optimal = min(cross_loss)
+        index = cross_loss.index(optimal)
+        print(cross_weights[index])
+
+        inter_pred.append(2*torch.sqrt(the_s_prediction*the_t_prediction)*torch.cos(cross_weights[index]))
+        angles.append(s_element.graph['theta'])
+
+        if len(s_set) % 10 == 0:
+            print('-----------------------------------------------------')
+
+    return inter_pred, angles, true_interf, s_amplitude, t_amplitude
+
+
+def training_interference_new(true_fun, s_loader, the_s_params, t_loader, the_t_params, the_n_epochs: int = 100,
+                              the_n_layers: list = [3,3], fold: int = 5, the_choice: str = 'parametrized', massive: bool = False):
+    """
+    Training function used to tune the phases for the two Feynman diagrams
+    :param true_fun: function corresponding to the interference term of two Feynman diagrams (now it must only depend on
+    a single momentum variable p and one single scattering angle theta)
+    :param  s_loader: DataLoader object of the s-channel training set
+    :param the_s_params: final params for the s-channel QGNN
+    :param  t_loader: DataLoader object of the t-channel training set
+    :param the_t_params: final params for the s-channel QGNN
+    :param  the_n_epochs: number of epochs of the training process
+    :param the_n_layers: numbers of layers of the quantum circuit
+    :param fold: numbers of times we repeat the training
+    :param  the_choice: kind of feature map to use in the quantum circuit (either 'parametrized' or 'unparametrized')
+    :param massive: boolean value that indicates whether we're in massive or massless regime
+    :return: the_weights: list of the final weights after the training
+    """
+
+    cross_weights = []
+    s_set = []
+    t_set = []
+    epoch_loss = [0]*fold
+
+    for s_item, t_item in zip(s_loader, t_loader):
+        # converting for each batch any DataLoader item into a list of tuples of networkx graph
+        # object and the corresponding output
+        s_element = to_networkx(data=s_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+        t_element = to_networkx(data=t_item[0][0], graph_attrs=['scattering', 'p_norm', 'theta'], node_attrs=['state'],
+                                edge_attrs=['mass', 'spin', 'charge'], to_undirected=True)
+
+        assert s_element.graph['theta'] == t_element.graph['theta'] and \
+               s_element.graph['p_norm'] == t_element.graph['p_norm'], "the angles and the momenta must be the same"
+
+        s_set.append(s_element)
+        t_set.append(t_element)
+
+    for i in range(fold):
+
+        epoch_loss[i] = []
+
+        the_weights = 0.01 * torch.randn(2, dtype=torch.float)
+        the_weights.requires_grad = True
+        opt = optim.Adam([the_weights], lr=1e-2)  # initialization of the optimizer to use
+
+        for epoch in range(the_n_epochs):
+            costs = []
+            starting_time = time.time()
+
+            for s_data, t_data in zip(s_set, t_set):
+                def opt_func():  # defining an optimization function for the training of the model
+
+                    assert s_data.graph['theta'] == t_data.graph['theta'] and \
+                           s_data.graph['p_norm'] == t_data.graph['p_norm'], "the angles and the momenta must be the same"
+
+                    truth = interference_truth(true_fun, s_data.graph['theta'][0], s_data.graph['p_norm'][0])
+
+                    the_s_prediction = single_predict(s_data, the_s_params, the_n_layers[0], the_choice,
+                                                      massive=massive)
+                    the_t_prediction = single_predict(t_data, the_t_params, the_n_layers[1], the_choice,
+                                                      massive=massive)
+
+                    prediction = 2 * torch.sqrt(the_s_prediction * the_t_prediction) * torch.cos(the_weights[0])
+
+                    loss = (prediction - torch.tensor(truth, dtype=torch.float))**2
+                    costs.append(loss.item())
+                    loss.backward()
+                    return loss
+
+                opt.zero_grad()
+                opt.step(opt_func)
+
+            ending_time = time.time()
+            elapsed = ending_time - starting_time
+
+            training_loss = np.mean(costs)
+            epoch_loss.append(training_loss)
+
+            if epoch != 0 and abs(epoch_loss[-1] - epoch_loss[-2]) < 1e-10:
+                the_n_epochs = epoch + 1  # Have to add 1 for plotting the right number of epochs
+                print('the training process stopped at epoch number ', epoch)
+                break
+
+            if epoch % 5 == 0:
+                res = [epoch, training_loss, elapsed]
+                print("Epoch: {:2d} | Training loss: {:3f} | Elapsed Time per Epoch: {:3f}".format(*res))
+
+        cross_weights.append(the_weights)
+
+        print('finished ', (i+1), ' repetition of k-fold cross validation')
+
+    cross_loss = []
+    cross_loss_std = []
+    for j in range(len(epoch_loss[0])):
+        mean = 0
+        mean2 = 0
+        for i in range(fold):
+            mean = mean + epoch_loss[i][j] / fold
+            mean2 = mean2 + epoch_loss[i][j] * epoch_loss[i][j] / fold
+
+        cross_loss.append(mean)
+        cross_loss_std.append(np.sqrt(mean2 - mean * mean))
+
+    np.savetxt('../data/interference/bhabha_interference_cross_training_loss_versione_2.txt', cross_loss)
+    np.savetxt('../data/interference/bhabha_interference_cross_training_std.txt_versione_2', cross_loss_std)
+
+    final_loss = []
+    for i in cross_loss:
+        final_loss.append(i[-1])
+        optimal = min(final_loss)
+    index = final_loss.index(optimal)
+
+    final_preds = []
+    angles = []
+    for s_data, t_data in zip(s_set, t_set):
+        the_s_prediction = single_predict(s_data, the_s_params, the_n_layers[0], the_choice,
+                                          massive=massive)
+        the_t_prediction = single_predict(t_data, the_t_params, the_n_layers[0], the_choice,
+                                          massive=massive)
+
+        angles.append(s_data.graph['theta'])
+        final_preds.append(2 * torch.sqrt(the_s_prediction * the_t_prediction) * torch.cos(cross_weights[index][0]))
+
+    return final_preds, angles,  cross_weights[index], cross_loss, cross_loss_std
